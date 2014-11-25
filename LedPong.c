@@ -23,6 +23,8 @@ void main()
 	P0MDOUT |= 0x01;
 	P1MDOUT |= 0x03;
 
+	init_display();
+
 	write_data(0x01, 0x20);
 	write_data(0x07, 0xFE);
 	write_data(0x06, 0xF0);
