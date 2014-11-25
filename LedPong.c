@@ -3,6 +3,7 @@
 void SYSCLK_Init();
 void init_display();
 void clear_display();
+void display_matrix(int[][]);
 void write_data(unsigned char a, unsigned char d);
 void sendData(unsigned char a, unsigned char d, int isLine);
 
@@ -31,6 +32,20 @@ void main()
 	write_data(0x04, 0xB0);
 	write_data(0x02, 0xCE);
 
+	int m[8][8];
+	int i;
+	int j;
+
+	for(i=0; i<8; i++)
+	{
+		for(j=0; j<8; j++)
+		{
+			m[i][j]=0;
+		}
+	}
+	m[4][5] = 1;
+	display_matrix(m);
+
 	while (1) {}
 }
 
@@ -57,6 +72,28 @@ void clear_display()
 void write_data(unsigned char a, unsigned char d)
 {
 	sendData(a, d, 1);
+}
+
+void display_matrix(int m[8][8])
+{
+	int i;
+	int j;
+	unsigned char a;
+	unsigned char d;
+	unsigned char b;
+	for (i=0; i<8; i++)
+	{
+		sprintf(a, "0x%X", i + 1);
+		d = 0x00;
+		b = 0x80;
+		for (j=0; j<8; j++)
+		{
+			if (m[i][j])
+				d |= b;
+			b=b>>1;
+		}
+		write_data(a, d);
+	}
 }
 
 void sendData(unsigned char a, unsigned char d, int isLine)
