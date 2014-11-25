@@ -1,4 +1,4 @@
-C51 COMPILER V9.50a   LEDPONG                                                              11/25/2014 16:05:08 PAGE 1   
+C51 COMPILER V9.50a   LEDPONG                                                              11/25/2014 17:29:02 PAGE 1   
 
 
 C51 COMPILER V9.50a, COMPILATION OF MODULE LEDPONG
@@ -12,104 +12,153 @@ line level    source
    3          void SYSCLK_Init();
    4          void init_display();
    5          void clear_display();
-   6          void write_data(unsigned char a, unsigned char d);
-   7          void sendData(unsigned char a, unsigned char d, int isLine);
-   8          
-   9          sbit CLK        = P0^0;
-  10          sbit DATA       = P1^0;
-  11          sbit LOAD       = P1^1;
-  12          
-  13          unsigned char init;
+   6          void display_matrix(int[8][8]);
+   7          void write_data(unsigned char a, unsigned char d);
+   8          void sendData(unsigned char a, unsigned char d, int isLine);
+   9          void test_matrix();
+  10          
+  11          sbit CLK        = P0^0;
+  12          sbit DATA       = P1^0;
+  13          sbit LOAD       = P1^1;
   14          
-  15          void main()
-  16          {
-  17   1              PCA0MD &= ~0x40;
-  18   1      
-  19   1              OSCICN  = 0xc3; // configure internal oscillator for its lowest frequency
-  20   1              RSTSRC  = 0x04; // enable missing clock detector
+  15          unsigned char init;
+  16          xdata int m[8][8];
+  17          
+  18          void main()
+  19          {
+  20   1              PCA0MD &= ~0x40;
   21   1      
-  22   1              XBR1     = 0x40;
-  23   1              P0MDOUT |= 0x01;
-  24   1              P1MDOUT |= 0x03;
-  25   1      
-  26   1              init_display();
-  27   1      
-  28   1              write_data(0x01, 0x20);
-  29   1              write_data(0x07, 0xFE);
-  30   1              write_data(0x06, 0xF0);
-  31   1              write_data(0x04, 0xB0);
-  32   1              write_data(0x02, 0xCE);
-  33   1      
-  34   1              while (1) {}
-  35   1      }
-  36          
-  37          void init_display()
-  38          {
-  39   1              DATA    = 0;
-  40   1              LOAD    = 0;
-  41   1              CLK     = 0;
-  42   1      
-  43   1              sendData(0x0C, 0x00, 0);        // shutdown
-  44   1              sendData(0x0C, 0x01, 0);        // Normal operation mode
-  45   1              sendData(0x0A, 0x0F, 0);        // Intensity
-  46   1              sendData(0x0B, 0x07, 0);        // No scan limit
-  47   1              sendData(0x09, 0x00, 0);        // No decode
-  48   1              clear_display();
-  49   1      }
-  50          
-  51          void clear_display()
-  52          {
-  53   1              for (init = 0x01;init<=0x08;init++)
-  54   1                      sendData(init, 0x00, 1);
-  55   1      }
-C51 COMPILER V9.50a   LEDPONG                                                              11/25/2014 16:05:08 PAGE 2   
+  22   1              OSCICN  = 0xc3; // configure internal oscillator for its lowest frequency
+  23   1              RSTSRC  = 0x04; // enable missing clock detector
+  24   1      
+  25   1              XBR1     = 0x40;
+  26   1              P0MDOUT |= 0x01;
+  27   1              P1MDOUT |= 0x03;
+  28   1      
+  29   1              init_display();
+  30   1      
+  31   1              //write_data(0x01, 0x20);
+  32   1              //write_data(0x07, 0xFE);
+  33   1              //write_data(0x06, 0xF0);
+  34   1              //write_data(0x04, 0xB0);
+  35   1              //write_data(0x02, 0xCE);
+  36   1      
+  37   1              test_matrix();
+  38   1      
+  39   1              while (1) {}
+  40   1      }
+  41          
+  42          void test_matrix()
+  43          {
+  44   1              int i;
+  45   1              int j;
+  46   1      
+  47   1              for(i=0; i<8; i++)
+  48   1              {
+  49   2                      for(j=0; j<8; j++)
+  50   2                      {
+  51   3                              m[i][j]=0;
+  52   3                      }
+  53   2              }
+  54   1      
+  55   1              m[4][5] = 1;
+C51 COMPILER V9.50a   LEDPONG                                                              11/25/2014 17:29:02 PAGE 2   
 
-  56          
-  57          void write_data(unsigned char a, unsigned char d)
-  58          {
-  59   1              sendData(a, d, 1);
-  60   1      }
-  61          
-  62          void sendData(unsigned char a, unsigned char d, int isLine)
-  63          {
-  64   1              //EA = 0;
-  65   1              unsigned char b;
-  66   1              unsigned char p;
-  67   1      
-  68   1              LOAD = 0;
-  69   1              CLK = 0;
-  70   1              for(b=0x80; b>0; b=b>>1)
-  71   1              {
-  72   2                      DATA = (a&b)?1:0;
-  73   2                      CLK = 1;
-  74   2                      CLK = 0;
-  75   2              }
-  76   1      
-  77   1              if(isLine)
-  78   1              {
-  79   2                      p = (d&0x01);
-  80   2                      d >>= 1;
-  81   2                      d &= 0x7F;
-  82   2                      if(p) d |= 0x80;
-  83   2              }
-  84   1      
-  85   1              for(b=0x80; b>0; b=b>>1)
-  86   1              {
-  87   2                      DATA = (d&b)?1:0;
-  88   2                      CLK = 1;
-  89   2                      CLK = 0;
-  90   2              }
-  91   1              LOAD = 1;
-  92   1              //EA = 1;
-  93   1      }
+  56   1              m[1][4] = 1;
+  57   1              display_matrix(m);
+  58   1      }
+  59          
+  60          void init_display()
+  61          {
+  62   1              DATA    = 0;
+  63   1              LOAD    = 0;
+  64   1              CLK     = 0;
+  65   1      
+  66   1              sendData(0x0C, 0x00, 0);        // shutdown
+  67   1              sendData(0x0C, 0x01, 0);        // Normal operation mode
+  68   1              sendData(0x0A, 0x0F, 0);        // Intensity
+  69   1              sendData(0x0B, 0x07, 0);        // No scan limit
+  70   1              sendData(0x09, 0x00, 0);        // No decode
+  71   1              clear_display();
+  72   1      }
+  73          
+  74          void clear_display()
+  75          {
+  76   1              for (init = 0x01;init<=0x08;init++)
+  77   1                      sendData(init, 0x00, 1);
+  78   1      }
+  79          
+  80          void write_data(unsigned char a, unsigned char d)
+  81          {
+  82   1              sendData(a, d, 1);
+  83   1      }
+  84          
+  85          void display_matrix(int m[8][8])
+  86          {
+  87   1              int i;
+  88   1              int j;
+  89   1              int k;
+  90   1              unsigned char a;
+  91   1              unsigned char d;
+  92   1              unsigned char b;
+  93   1              for (i=0; i<8; i++)
+  94   1              {
+  95   2                      k = i+1;
+  96   2                      a = '0' + k;
+  97   2                      d = 0x00;
+  98   2                      b = 0x80;
+  99   2                      for (j=0; j<8; j++)
+ 100   2                      {
+ 101   3                              if (m[i][j])
+ 102   3                                      d |= b;
+ 103   3                              b=b>>1;
+ 104   3                      }
+ 105   2                      write_data(a, d);
+ 106   2              }
+ 107   1      }
+ 108          
+ 109          void sendData(unsigned char a, unsigned char d, int isLine)
+ 110          {
+ 111   1              //EA = 0;
+ 112   1              unsigned char b;
+ 113   1              unsigned char p;
+ 114   1      
+ 115   1              LOAD = 0;
+ 116   1              CLK = 0;
+ 117   1              for(b=0x80; b>0; b=b>>1)
+C51 COMPILER V9.50a   LEDPONG                                                              11/25/2014 17:29:02 PAGE 3   
+
+ 118   1              {
+ 119   2                      DATA = (a&b)?1:0;
+ 120   2                      CLK = 1;
+ 121   2                      CLK = 0;
+ 122   2              }
+ 123   1      
+ 124   1              if(isLine)
+ 125   1              {
+ 126   2                      p = (d&0x01);
+ 127   2                      d >>= 1;
+ 128   2                      d &= 0x7F;
+ 129   2                      if(p) d |= 0x80;
+ 130   2              }
+ 131   1      
+ 132   1              for(b=0x80; b>0; b=b>>1)
+ 133   1              {
+ 134   2                      DATA = (d&b)?1:0;
+ 135   2                      CLK = 1;
+ 136   2                      CLK = 0;
+ 137   2              }
+ 138   1              LOAD = 1;
+ 139   1              //EA = 1;
+ 140   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    227    ----
+   CODE SIZE        =    422    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =   ----    ----
+   XDATA SIZE       =    128    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =      1    ----
+   DATA SIZE        =      1      10
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.

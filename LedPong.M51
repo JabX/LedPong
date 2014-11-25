@@ -1,4 +1,4 @@
-BL51 BANKED LINKER/LOCATER V6.22              11/25/2014  16:05:08  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22              11/25/2014  17:29:02  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
@@ -13,6 +13,7 @@ MEMORY MODEL: SMALL
 INPUT MODULES INCLUDED:
   C:\Users\Damien\Documents\GitHub\LedPong\LedPong.obj (LEDPONG)
   C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
+  C:\KEIL\C51\LIB\C51S.LIB (?C?ILDPTR)
 
 
 LINK MAP OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LEDPONG
@@ -24,19 +25,27 @@ LINK MAP OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LEDPONG
 
             * * * * * * *   D A T A   M E M O R Y   * * * * * * *
             REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
-            DATA    0008H     0001H     UNIT         ?DT?LEDPONG
-            IDATA   0009H     0001H     UNIT         ?STACK
+            DATA    0008H     000AH     UNIT         _DATA_GROUP_
+            DATA    0012H     0001H     UNIT         ?DT?LEDPONG
+            IDATA   0013H     0001H     UNIT         ?STACK
+
+            * * * * * * *  X D A T A   M E M O R Y  * * * * * * *
+            XDATA   0000H     0080H     UNIT         ?XD?LEDPONG
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
                     0003H     07FDH                  *** GAP ***
-            CODE    0800H     0057H     UNIT         ?PR?_SENDDATA?LEDPONG
-            CODE    0857H     003AH     UNIT         ?PR?MAIN?LEDPONG
-            CODE    0891H     0033H     UNIT         ?PR?INIT_DISPLAY?LEDPONG
-            CODE    08C4H     0018H     UNIT         ?PR?CLEAR_DISPLAY?LEDPONG
+            CODE    0800H     007BH     UNIT         ?PR?_DISPLAY_MATRIX?LEDPO
+>> NG
+            CODE    087BH     0068H     UNIT         ?PR?TEST_MATRIX?LEDPONG
+            CODE    08E3H     0057H     UNIT         ?PR?_SENDDATA?LEDPONG
+            CODE    093AH     0033H     UNIT         ?PR?INIT_DISPLAY?LEDPONG
+            CODE    096DH     002BH     UNIT         ?C?LIB_CODE
+            CODE    0998H     001AH     UNIT         ?PR?MAIN?LEDPONG
+            CODE    09B2H     0018H     UNIT         ?PR?CLEAR_DISPLAY?LEDPONG
 >> 
-            CODE    08DCH     000CH     UNIT         ?C_C51STARTUP
-            CODE    08E8H     0007H     UNIT         ?PR?_WRITE_DATA?LEDPONG
+            CODE    09CAH     000CH     UNIT         ?C_C51STARTUP
+            CODE    09D6H     0007H     UNIT         ?PR?_WRITE_DATA?LEDPONG
 
 
 
@@ -44,32 +53,38 @@ OVERLAY MAP OF MODULE:   C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
 >> PONG)
 
 
-SEGMENT
-  +--> CALLED SEGMENT
----------------------
-?C_C51STARTUP
+SEGMENT                               DATA_GROUP 
+  +--> CALLED SEGMENT               START    LENGTH
+---------------------------------------------------
+?C_C51STARTUP                       -----    -----
   +--> ?PR?MAIN?LEDPONG
 
-?PR?MAIN?LEDPONG
+?PR?MAIN?LEDPONG                    -----    -----
   +--> ?PR?INIT_DISPLAY?LEDPONG
-  +--> ?PR?_WRITE_DATA?LEDPONG
+  +--> ?PR?TEST_MATRIX?LEDPONG
 
-?PR?INIT_DISPLAY?LEDPONG
+?PR?INIT_DISPLAY?LEDPONG            -----    -----
   +--> ?PR?_SENDDATA?LEDPONG
   +--> ?PR?CLEAR_DISPLAY?LEDPONG
 
-?PR?CLEAR_DISPLAY?LEDPONG
+BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  17:29:02  PAGE 2
+
+
+?PR?CLEAR_DISPLAY?LEDPONG           -----    -----
   +--> ?PR?_SENDDATA?LEDPONG
 
-?PR?_WRITE_DATA?LEDPONG
+?PR?TEST_MATRIX?LEDPONG             0008H    0002H
+  +--> ?PR?_DISPLAY_MATRIX?LEDPONG
+
+?PR?_DISPLAY_MATRIX?LEDPONG         000AH    0008H
+  +--> ?PR?_WRITE_DATA?LEDPONG
+
+?PR?_WRITE_DATA?LEDPONG             -----    -----
   +--> ?PR?_SENDDATA?LEDPONG
 
 
 
 SYMBOL TABLE OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
-BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  16:05:08  PAGE 2
-
-
 >> PONG)
 
   VALUE           TYPE          NAME
@@ -83,7 +98,7 @@ SYMBOL TABLE OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
   D:00A4H         PUBLIC        P0MDOUT
   D:00A5H         PUBLIC        P1MDOUT
   D:00A8H         PUBLIC        IE
-  C:0891H         PUBLIC        init_display
+  C:093AH         PUBLIC        init_display
   D:00D9H         PUBLIC        PCA0MD
   D:00D8H         PUBLIC        PCA0CN
   D:00B8H         PUBLIC        IP
@@ -91,68 +106,116 @@ SYMBOL TABLE OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
   D:00E2H         PUBLIC        XBR1
   B:0090H.1       PUBLIC        LOAD
   D:00C0H         PUBLIC        SMB0CN
-  C:0857H         PUBLIC        main
-  C:0803H         PUBLIC        _sendData
-  C:08E8H         PUBLIC        _write_data
+  C:0998H         PUBLIC        main
+  C:08E6H         PUBLIC        _sendData
+  C:09D6H         PUBLIC        _write_data
   D:00F8H         PUBLIC        SPI0CN
   D:0088H         PUBLIC        TCON
-  D:0008H         PUBLIC        init
+  D:0012H         PUBLIC        init
   D:00C8H         PUBLIC        TMR2CN
+  C:087BH         PUBLIC        test_matrix
   D:00B2H         PUBLIC        OSCICN
   B:0080H.0       PUBLIC        CLK
   D:00EFH         PUBLIC        RSTSRC
   D:0098H         PUBLIC        SCON0
-  C:08C4H         PUBLIC        clear_display
+  C:09B2H         PUBLIC        clear_display
+  X:0000H         PUBLIC        m
+  C:0800H         PUBLIC        _display_matrix
   D:00D0H         PUBLIC        PSW
   -------         PROC          MAIN
-  C:0857H         LINE#         15
-  C:0857H         LINE#         16
-  C:0857H         LINE#         17
-  C:085AH         LINE#         19
-  C:085DH         LINE#         20
-  C:0860H         LINE#         22
-  C:0863H         LINE#         23
-  C:0866H         LINE#         24
-  C:0869H         LINE#         26
-  C:086CH         LINE#         28
-  C:0873H         LINE#         29
-  C:087AH         LINE#         30
-  C:0881H         LINE#         31
-  C:0888H         LINE#         32
-  C:088FH         LINE#         34
+  C:0998H         LINE#         18
+  C:0998H         LINE#         19
+  C:0998H         LINE#         20
+  C:099BH         LINE#         22
+  C:099EH         LINE#         23
+  C:09A1H         LINE#         25
+  C:09A4H         LINE#         26
+  C:09A7H         LINE#         27
+  C:09AAH         LINE#         29
+  C:09ADH         LINE#         37
+  C:09B0H         LINE#         39
   -------         ENDPROC       MAIN
+BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  17:29:02  PAGE 3
+
+
+  -------         PROC          TEST_MATRIX
+  -------         DO            
+  D:0008H         SYMBOL        i
+  D:0004H         SYMBOL        j
+  -------         ENDDO         
+  C:087BH         LINE#         42
+  C:087BH         LINE#         43
+  C:087BH         LINE#         47
+  C:0880H         LINE#         48
+  C:0880H         LINE#         49
+  C:0883H         LINE#         50
+  C:0883H         LINE#         51
+  C:08B2H         LINE#         52
+  C:08BDH         LINE#         53
+  C:08CBH         LINE#         55
+  C:08D3H         LINE#         56
+  C:08DBH         LINE#         57
+  -------         ENDPROC       TEST_MATRIX
   -------         PROC          INIT_DISPLAY
-  C:0891H         LINE#         37
-  C:0891H         LINE#         38
-  C:0891H         LINE#         39
-  C:0893H         LINE#         40
-  C:0895H         LINE#         41
-  C:0897H         LINE#         43
-  C:08A0H         LINE#         44
-  C:08A7H         LINE#         45
-  C:08AEH         LINE#         46
-  C:08B8H         LINE#         47
-  C:08C1H         LINE#         48
+  C:093AH         LINE#         60
+  C:093AH         LINE#         61
+  C:093AH         LINE#         62
+  C:093CH         LINE#         63
+  C:093EH         LINE#         64
+  C:0940H         LINE#         66
+  C:0949H         LINE#         67
+  C:0950H         LINE#         68
+  C:0957H         LINE#         69
+  C:0961H         LINE#         70
+  C:096AH         LINE#         71
   -------         ENDPROC       INIT_DISPLAY
   -------         PROC          CLEAR_DISPLAY
-BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  16:05:08  PAGE 3
-
-
-  C:08C4H         LINE#         51
-  C:08C4H         LINE#         52
-  C:08C4H         LINE#         53
-  C:08C7H         LINE#         54
-  C:08DBH         LINE#         55
+  C:09B2H         LINE#         74
+  C:09B2H         LINE#         75
+  C:09B2H         LINE#         76
+  C:09B5H         LINE#         77
+  C:09C9H         LINE#         78
   -------         ENDPROC       CLEAR_DISPLAY
   -------         PROC          _WRITE_DATA
   D:0007H         SYMBOL        a
   D:0005H         SYMBOL        d
-  C:08E8H         LINE#         57
-  C:08E8H         LINE#         58
-  C:08E8H         LINE#         59
+  C:09D6H         LINE#         80
+  C:09D6H         LINE#         81
+  C:09D6H         LINE#         82
   -------         ENDPROC       _WRITE_DATA
-  -------         PROC          L?0023
-  -------         ENDPROC       L?0023
+  -------         PROC          _DISPLAY_MATRIX
+  D:000AH         SYMBOL        m
+  -------         DO            
+  D:000DH         SYMBOL        i
+  D:0004H         SYMBOL        j
+  D:0006H         SYMBOL        k
+  D:000FH         SYMBOL        a
+  D:0010H         SYMBOL        d
+  D:0011H         SYMBOL        b
+  -------         ENDDO         
+  C:0800H         LINE#         85
+  C:0806H         LINE#         86
+  C:0806H         LINE#         93
+  C:080BH         LINE#         94
+  C:080BH         LINE#         95
+  C:0810H         LINE#         96
+  C:0815H         LINE#         97
+  C:0818H         LINE#         98
+  C:081BH         LINE#         99
+  C:081DH         LINE#         100
+BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  17:29:02  PAGE 4
+
+
+  C:081DH         LINE#         101
+  C:084BH         LINE#         102
+  C:084FH         LINE#         103
+  C:0855H         LINE#         104
+  C:0860H         LINE#         105
+  C:0867H         LINE#         106
+  C:087AH         LINE#         107
+  -------         ENDPROC       _DISPLAY_MATRIX
+  -------         PROC          L?0042
+  -------         ENDPROC       L?0042
   -------         PROC          _SENDDATA
   D:0007H         SYMBOL        a
   D:0005H         SYMBOL        d
@@ -161,40 +224,44 @@ SYMBOL TABLE OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
   D:0006H         SYMBOL        b
   D:0007H         SYMBOL        p
   -------         ENDDO         
-  C:0803H         LINE#         62
-  C:0803H         LINE#         63
-  C:0803H         LINE#         68
-  C:0805H         LINE#         69
-  C:0807H         LINE#         70
-  C:080FH         LINE#         71
-  C:080FH         LINE#         72
-  C:0819H         LINE#         73
-  C:081BH         LINE#         74
-  C:081DH         LINE#         75
-  C:0823H         LINE#         77
-  C:0827H         LINE#         78
-  C:0827H         LINE#         79
-  C:082BH         LINE#         80
-  C:082FH         LINE#         81
-  C:0832H         LINE#         82
-  C:0838H         LINE#         83
-  C:0838H         LINE#         85
-  C:0840H         LINE#         86
-  C:0840H         LINE#         87
-  C:084AH         LINE#         88
-  C:084CH         LINE#         89
-  C:084EH         LINE#         90
-  C:0854H         LINE#         91
-  C:0856H         LINE#         93
+  C:08E6H         LINE#         109
+  C:08E6H         LINE#         110
+  C:08E6H         LINE#         115
+  C:08E8H         LINE#         116
+  C:08EAH         LINE#         117
+  C:08F2H         LINE#         118
+  C:08F2H         LINE#         119
+  C:08FCH         LINE#         120
+  C:08FEH         LINE#         121
+  C:0900H         LINE#         122
+  C:0906H         LINE#         124
+  C:090AH         LINE#         125
+  C:090AH         LINE#         126
+  C:090EH         LINE#         127
+  C:0912H         LINE#         128
+  C:0915H         LINE#         129
+  C:091BH         LINE#         130
+  C:091BH         LINE#         132
+  C:0923H         LINE#         133
+  C:0923H         LINE#         134
+  C:092DH         LINE#         135
+  C:092FH         LINE#         136
+  C:0931H         LINE#         137
+  C:0937H         LINE#         138
+  C:0939H         LINE#         140
   -------         ENDPROC       _SENDDATA
   -------         ENDMOD        LEDPONG
 
+  -------         MODULE        ?C?ILDPTR
+  C:096DH         PUBLIC        ?C?ILDPTR
+  -------         ENDMOD        ?C?ILDPTR
+
 ******************************************************************************
 >> 
-* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 00E3H BYTE (11%) *
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 01A6H BYTE (20%) *
 >> 
 ******************************************************************************
 >> 
 
-Program Size: data=10.0 xdata=0 code=242
+Program Size: data=20.0 xdata=128 code=480
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)
