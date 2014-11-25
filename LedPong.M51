@@ -1,20 +1,22 @@
-BL51 BANKED LINKER/LOCATER V6.22              11/24/2014  13:07:27  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22              11/25/2014  15:53:23  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.22, INVOKED BY:
-C:\KEIL\C51\BIN\BL51.EXE C:\Users\Damien\Desktop\LedPong.obj TO C:\Users\Damie
->> n\Desktop\LedPong RS (256) PL (68) PW (78)
+C:\KEIL\C51\BIN\BL51.EXE C:\Users\Damien\Documents\GitHub\LedPong\LedPong.obj 
+>> TO C:\Users\Damien\Documents\GitHub\LedPong\LedPong RS (256) PL (68) PW (78
+>> )
 
 
 MEMORY MODEL: SMALL
 
 
 INPUT MODULES INCLUDED:
-  C:\Users\Damien\Desktop\LedPong.obj (LEDPONG)
+  C:\Users\Damien\Documents\GitHub\LedPong\LedPong.obj (LEDPONG)
   C:\KEIL\C51\LIB\C51S.LIB (?C_STARTUP)
 
 
-LINK MAP OF MODULE:  C:\Users\Damien\Desktop\LedPong (LEDPONG)
+LINK MAP OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LEDPONG
+>> )
 
 
             TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
@@ -22,37 +24,37 @@ LINK MAP OF MODULE:  C:\Users\Damien\Desktop\LedPong (LEDPONG)
 
             * * * * * * *   D A T A   M E M O R Y   * * * * * * *
             REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
-            DATA    0008H     0002H     UNIT         _DATA_GROUP_
-            IDATA   000AH     0001H     UNIT         ?STACK
+            DATA    0008H     0001H     UNIT         ?DT?LEDPONG
+            IDATA   0009H     0001H     UNIT         ?STACK
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
                     0003H     07FDH                  *** GAP ***
-            CODE    0800H     002FH     UNIT         ?PR?_SENDDATA?LEDPONG
-            CODE    082FH     001EH     UNIT         ?PR?MAIN?LEDPONG
-            CODE    084DH     000CH     UNIT         ?C_C51STARTUP
-            CODE    0859H     0007H     UNIT         ?PR?SYSCLK_INIT?LEDPONG
+            CODE    0800H     008DH     UNIT         ?PR?MAIN?LEDPONG
+            CODE    088DH     0058H     UNIT         ?PR?_SENDDATA?LEDPONG
+            CODE    08E5H     000CH     UNIT         ?C_C51STARTUP
+            CODE    08F1H     0007H     UNIT         ?PR?SYSCLK_INIT?LEDPONG
 
 
 
-OVERLAY MAP OF MODULE:   C:\Users\Damien\Desktop\LedPong (LEDPONG)
+OVERLAY MAP OF MODULE:   C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
+>> PONG)
 
 
-SEGMENT                           DATA_GROUP 
-  +--> CALLED SEGMENT           START    LENGTH
------------------------------------------------
-?C_C51STARTUP                   -----    -----
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
   +--> ?PR?MAIN?LEDPONG
 
-?PR?MAIN?LEDPONG                -----    -----
+?PR?MAIN?LEDPONG
   +--> ?PR?SYSCLK_INIT?LEDPONG
   +--> ?PR?_SENDDATA?LEDPONG
 
-?PR?_SENDDATA?LEDPONG           0008H    0002H
 
 
-
-SYMBOL TABLE OF MODULE:  C:\Users\Damien\Desktop\LedPong (LEDPONG)
+SYMBOL TABLE OF MODULE:  C:\Users\Damien\Documents\GitHub\LedPong\LedPong (LED
+>> PONG)
 
   VALUE           TYPE          NAME
   ----------------------------------
@@ -65,85 +67,107 @@ SYMBOL TABLE OF MODULE:  C:\Users\Damien\Desktop\LedPong (LEDPONG)
   D:00A4H         PUBLIC        P0MDOUT
   D:00A5H         PUBLIC        P1MDOUT
   D:00A8H         PUBLIC        IE
+BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  15:53:23  PAGE 2
+
+
   D:00D9H         PUBLIC        PCA0MD
   D:00D8H         PUBLIC        PCA0CN
-BL51 BANKED LINKER/LOCATER V6.22            11/24/2014  13:07:27  PAGE 2
-
-
   D:00B8H         PUBLIC        IP
   B:0090H.0       PUBLIC        DATA
   D:00E2H         PUBLIC        XBR1
   B:0090H.1       PUBLIC        LOAD
   D:00C0H         PUBLIC        SMB0CN
-  C:082FH         PUBLIC        main
-  C:0800H         PUBLIC        _sendData
+  C:0800H         PUBLIC        main
+  C:0891H         PUBLIC        _sendData
   D:00F8H         PUBLIC        SPI0CN
   D:0088H         PUBLIC        TCON
+  D:0008H         PUBLIC        init
   D:00C8H         PUBLIC        TMR2CN
   D:00B2H         PUBLIC        OSCICN
-  C:0859H         PUBLIC        SYSCLK_Init
+  C:08F1H         PUBLIC        SYSCLK_Init
   B:0080H.0       PUBLIC        CLK
   D:00EFH         PUBLIC        RSTSRC
   D:0098H         PUBLIC        SCON0
   D:00D0H         PUBLIC        PSW
   -------         PROC          MAIN
-  C:082FH         LINE#         10
-  C:082FH         LINE#         11
-  C:082FH         LINE#         12
-  C:0832H         LINE#         14
-  C:0835H         LINE#         15
-  C:0838H         LINE#         16
-  C:083BH         LINE#         17
-  C:083EH         LINE#         18
-  C:0840H         LINE#         19
-  C:0842H         LINE#         20
-  C:0844H         LINE#         22
-  C:0844H         LINE#         23
-  C:0844H         LINE#         24
-  C:084BH         LINE#         25
+  C:0800H         LINE#         12
+  C:0800H         LINE#         13
+  C:0800H         LINE#         14
+  C:0803H         LINE#         16
+  C:0806H         LINE#         17
+  C:0809H         LINE#         18
+  C:080CH         LINE#         19
+  C:080FH         LINE#         20
+  C:0811H         LINE#         21
+  C:0813H         LINE#         22
+  C:0815H         LINE#         24
+  C:081EH         LINE#         25
+  C:0828H         LINE#         26
+  C:0832H         LINE#         27
+  C:083CH         LINE#         28
+  C:0845H         LINE#         29
+  C:0848H         LINE#         30
+  C:085CH         LINE#         31
+  C:0863H         LINE#         32
+  C:086AH         LINE#         33
+  C:0875H         LINE#         34
+  C:0880H         LINE#         35
+  C:088BH         LINE#         36
   -------         ENDPROC       MAIN
   -------         PROC          SYSCLK_INIT
-  C:0859H         LINE#         28
-  C:0859H         LINE#         29
-  C:0859H         LINE#         30
-  C:085CH         LINE#         31
-  C:085FH         LINE#         32
+  C:08F1H         LINE#         39
+  C:08F1H         LINE#         40
+  C:08F1H         LINE#         41
+  C:08F4H         LINE#         42
+  C:08F7H         LINE#         43
   -------         ENDPROC       SYSCLK_INIT
+  -------         PROC          L?0021
+  -------         ENDPROC       L?0021
   -------         PROC          _SENDDATA
-  D:0008H         SYMBOL        a
-  D:0009H         SYMBOL        d
+  D:0007H         SYMBOL        a
+  D:0005H         SYMBOL        d
+  D:0002H         SYMBOL        isLine
   -------         DO            
-  D:0007H         SYMBOL        b
+  D:0006H         SYMBOL        b
+  D:0007H         SYMBOL        p
   -------         ENDDO         
-  C:0800H         LINE#         34
-  C:0804H         LINE#         35
-  C:0804H         LINE#         39
-  C:0806H         LINE#         40
-  C:080EH         LINE#         41
-  C:080EH         LINE#         43
-  C:0810H         LINE#         44
-  C:0812H         LINE#         45
-  C:0814H         LINE#         46
-  C:0819H         LINE#         47
-  C:0821H         LINE#         48
-  C:0821H         LINE#         50
-  C:0823H         LINE#         51
-  C:0825H         LINE#         52
-  C:0827H         LINE#         53
-  C:082CH         LINE#         54
-  C:082EH         LINE#         56
+  C:0891H         LINE#         45
+  C:0891H         LINE#         46
+  C:0891H         LINE#         51
+  C:0893H         LINE#         52
+BL51 BANKED LINKER/LOCATER V6.22            11/25/2014  15:53:23  PAGE 3
+
+
+  C:0895H         LINE#         53
+  C:089DH         LINE#         54
+  C:089DH         LINE#         55
+  C:08A7H         LINE#         56
+  C:08A9H         LINE#         57
+  C:08ABH         LINE#         58
+  C:08B1H         LINE#         60
+  C:08B5H         LINE#         61
+  C:08B5H         LINE#         62
+  C:08B9H         LINE#         63
+  C:08BDH         LINE#         64
+  C:08C0H         LINE#         65
+  C:08C6H         LINE#         66
+  C:08C6H         LINE#         68
+  C:08CEH         LINE#         69
+  C:08CEH         LINE#         70
+  C:08D8H         LINE#         71
+  C:08DAH         LINE#         72
+  C:08DCH         LINE#         73
+  C:08E2H         LINE#         74
+  C:08E4H         LINE#         76
   -------         ENDPROC       _SENDDATA
   -------         ENDMOD        LEDPONG
 
-BL51 BANKED LINKER/LOCATER V6.22            11/24/2014  13:07:27  PAGE 3
-
-
 ******************************************************************************
 >> 
-* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 0054H BYTE ( 4%) *
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 00ECH BYTE (11%) *
 >> 
 ******************************************************************************
 >> 
 
-Program Size: data=11.0 xdata=0 code=99
+Program Size: data=10.0 xdata=0 code=251
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,14 +1,14 @@
 
 BL51 BANKED LINKER/LOCATER V6.22 - SN: Eval Version
 COPYRIGHT KEIL ELEKTRONIK GmbH 1987 - 2009
-"C:\Users\Damien\Desktop\LedPong.obj"  TO "C:\Users\Damien\Desktop\LedPong" RS(256) PL(68) PW(78)  
+"C:\Users\Damien\Documents\GitHub\LedPong\LedPong.obj"  TO "C:\Users\Damien\Documents\GitHub\LedPong\LedPong" RS(256) PL(68) PW(78) 
 
 ******************************************************************************
-* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 0054H BYTE ( 4%) *
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 00ECH BYTE (11%) *
 ******************************************************************************
 
 >> 
 >> 
 >> 
-Program Size: data=11.0 xdata=0 code=99
+Program Size: data=10.0 xdata=0 code=251
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)
