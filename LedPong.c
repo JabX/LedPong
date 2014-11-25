@@ -1,6 +1,9 @@
 #include <c8051f310.h>
 
 void SYSCLK_Init();
+void init_display();
+void clear_display();
+void write_data(unsigned char a, unsigned char d);
 void sendData(unsigned char a, unsigned char d, int isLine);
 
 sbit CLK 	= P0^0;
@@ -20,6 +23,17 @@ void main()
 	P0MDOUT |= 0x01;
 	P1MDOUT |= 0x03;
 
+	write_data(0x01, 0x20);
+	write_data(0x07, 0xFE);
+	write_data(0x06, 0xF0);
+	write_data(0x04, 0xB0);
+	write_data(0x02, 0xCE);
+
+	while (1) {}
+}
+
+void init_display()
+{
 	DATA 	= 0;
 	LOAD 	= 0;
 	CLK 	= 0;
@@ -29,16 +43,18 @@ void main()
 	sendData(0x0A, 0x0F, 0); 	// Intensity
 	sendData(0x0B, 0x07, 0); 	// No scan limit
 	sendData(0x09, 0x00, 0); 	// No decode
+	clear_display();
+}
+
+void clear_display()
+{
 	for (init = 0x01;init<=0x08;init++)
 		sendData(init, 0x00, 1);
+}
 
-	sendData(0x01, 0x20, 1);
-	sendData(0x07, 0xFE, 1);
-	sendData(0x06, 0xF0, 1);
-	sendData(0x04, 0xB0, 1);
-	sendData(0x02, 0xCE, 1);
-
-	while (1) {}
+void write_data(unsigned char a, unsigned char d)
+{
+	sendData(a, d, 1);
 }
 
 void sendData(unsigned char a, unsigned char d, int isLine)
