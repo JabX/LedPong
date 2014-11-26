@@ -1,119 +1,198 @@
 #include <c8051f310.h>
 
-void SYSCLK_Init();
-void init_display();
-void clear_display();
-void display_matrix(int[8][8]);
-void write_data(unsigned char a, unsigned char d);
-void sendData(unsigned char a, unsigned char d, int isLine);
-void test_matrix();
-
+// Same clock, same data for all 4 panels, but different loads
 sbit CLK 	= P0^0;
-sbit DATA 	= P1^0;
-sbit LOAD	= P1^1;
+sbit DATA	= P1^0;
+sbit LOAD1	= P1^1;
+sbit LOAD2	= P1^2;
+sbit LOAD3	= P1^3;
+sbit LOAD4	= P1^4;
 
-unsigned char init;
-xdata int m[8][8];
+xdata int m[16][16];	// Matrix
+
+unsigned char init;		// Byte iterator
+int i;					// Int iterator
+int j;					// Int iterator
+
+void initMIC();
+void initDisplay();
+
+void clearDisplay();
+void displayMatrix();
+
+// Matrices definition
+//  	3	4
+//		1	2
+
+void writeData(int, unsigned char, unsigned char);	// Set all LEDs on matrix 'int'
+void sendDataAll(unsigned char, unsigned char); 	// Send a non-LED message to all matrixes
+void sendData1(unsigned char, unsigned char, int);
+void sendData2(unsigned char, unsigned char, int);
+void sendData3(unsigned char, unsigned char, int);
+void sendData4(unsigned char, unsigned char, int);
+void sendData(unsigned char, unsigned char, int);
+
 
 void main()
 {
-	PCA0MD &= ~0x40;
+	initMIC();
+	initDisplay();
 
-	OSCICN	= 0xc3;	// configure internal oscillator for its lowest frequency
-	RSTSRC 	= 0x04;	// enable missing clock detector
+	for(i = 0; i < 16; i++)
+		for(j = 0; j < 16; j++)
+			m[i][j] = 0;
 
-	XBR1     = 0x40;
-	P0MDOUT |= 0x01;
-	P1MDOUT |= 0x03;
-
-	init_display();
-
-	//write_data(0x01, 0x20);
-	//write_data(0x07, 0xFE);
-	//write_data(0x06, 0xF0);
-	//write_data(0x04, 0xB0);
-	//write_data(0x02, 0xCE);
-
-	test_matrix();
+	m[4][5] = 1;
+	m[1][4] = 1;
+	displayMatrix();
 
 	while (1) {}
 }
 
-void test_matrix()
+void initMIC()
 {
-	int i;
-	int j;
+	PCA0MD	&= ~0x40;	// Turn off watchdog
 
-	for(i=0; i<8; i++)
-	{
-		for(j=0; j<8; j++)
-		{
-			m[i][j]=0;
-		}
-	}
+	OSCICN	 = 0xc3;	// Configure internal oscillator for its lowest frequency
+	RSTSRC 	 = 0x04;	// Enable missing clock detector
 
-	m[4][5] = 1;
-	m[1][4] = 1;
-	display_matrix(m);
+	XBR1     = 0x40;	// Enable ???
+	P0MDOUT |= 0x01;	// Push-pull for P0.0
+	P1MDOUT |= 0x1F;	// Push-pull for P1.0 -> P1.4
 }
 
-void init_display()
+void initDisplay()
 {
-	DATA 	= 0;
-	LOAD 	= 0;
 	CLK 	= 0;
+	DATA 	= 0;
+	LOAD1 	= 0;
+	LOAD2 	= 0;
+	LOAD3 	= 0;
+	LOAD4 	= 0;
 
-	sendData(0x0C, 0x00, 0); 	// shutdown
-	sendData(0x0C, 0x01, 0); 	// Normal operation mode
-	sendData(0x0A, 0x0F, 0); 	// Intensity
-	sendData(0x0B, 0x07, 0); 	// No scan limit
-	sendData(0x09, 0x00, 0); 	// No decode
-	clear_display();
+	sendDataAll(0x0C, 0x00); 	// Shutdown
+	sendDataAll(0x0C, 0x01); 	// Normal operation mode
+	sendDataAll(0x0A, 0x0F); 	// Intensity
+	sendDataAll(0x0B, 0x07); 	// No scan limit
+	sendDataAll(0x09, 0x00); 	// No decode
+
+	clearDisplay();
 }
 
-void clear_display()
+
+void clearDisplay()
 {
-	for (init = 0x01;init<=0x08;init++)
-		sendData(init, 0x00, 1);
+	for(i = 0; i <= 16; i++)
+		for(j = 0; j <= 16; j++)
+			m[i][j] = 0;
+
+	displayMatrix();
 }
 
-void write_data(unsigned char a, unsigned char d)
+void displayMatrix()
 {
-	sendData(a, d, 1);
-}
-
-void display_matrix(int m[8][8])
-{
-	int i;
-	int j;
 	int k;
 	unsigned char a;
 	unsigned char d;
 	unsigned char b;
-	for (i=0; i<8; i++)
+
+	for (i = 0; i < 16; i++)
 	{
-		k = i+1;
+		k = i + 1;
 		a = '0' + k;
+
+		// Left matrixes
 		d = 0x00;
 		b = 0x80;
-		for (j=0; j<8; j++)
+		for (j = 0; j < 8; j++)
 		{
-			if (m[i][j])
+			if(m[i][j])
 				d |= b;
-			b=b>>1;
+			b = b >> 1;
 		}
-		write_data(a, d);
+		if(i < 8)
+			writeData(1, a, d);
+		else
+			writeData(3, a, d);
+
+		// Right matrixes
+		d = 0x00;
+		b = 0x80;
+		for (j = 8; j < 16; j++)
+		{
+			if(m[i][j])
+				d |= b;
+			b = b >> 1;
+		}
+		if(i < 8)
+			writeData(2, a, d);
+		else
+			writeData(4, a, d);
 	}
+}
+
+void writeData(int n, unsigned char a, unsigned char d)
+{
+	switch(n)
+	{
+	case 1:
+		sendData1(a, d, 1);
+		break;
+	case 2:
+		sendData2(a, d, 1);
+		break;
+	case 3:
+		sendData3(a, d, 1);
+		break;
+	case 4:
+		sendData4(a, d, 1);
+		break;
+	}
+}
+
+void sendDataAll(unsigned char a, unsigned char d)
+{
+	sendData1(a, d, 0);
+	sendData2(a, d, 0);
+	sendData3(a, d, 0);
+	sendData4(a, d, 0);
+}
+
+void sendData1(unsigned char a, unsigned char d, int isLine)
+{
+	LOAD1 = 0;
+	sendData(a, d, isLine);
+	LOAD1 = 1;
+}
+
+void sendData2(unsigned char a, unsigned char d, int isLine)
+{
+	LOAD2 = 0;
+	sendData(a, d, isLine);
+	LOAD2 = 1;
+}
+
+void sendData3(unsigned char a, unsigned char d, int isLine)
+{
+	LOAD3 = 0;
+	sendData(a, d, isLine);
+	LOAD3 = 1;
+}
+
+void sendData4(unsigned char a, unsigned char d, int isLine)
+{
+	LOAD4 = 0;
+	sendData(a, d, isLine);
+	LOAD4 = 1;
 }
 
 void sendData(unsigned char a, unsigned char d, int isLine)
 {
-	//EA = 0;
 	unsigned char b;
 	unsigned char p;
 
-	LOAD = 0;
 	CLK = 0;
+
 	for(b=0x80; b>0; b=b>>1)
 	{
 		DATA = (a&b)?1:0;
@@ -135,6 +214,4 @@ void sendData(unsigned char a, unsigned char d, int isLine)
 		CLK = 1;
 		CLK = 0;
 	}
-	LOAD = 1;
-	//EA = 1;
 }
