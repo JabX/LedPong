@@ -38,10 +38,7 @@ void main()
 	initMIC();
 	initDisplay();
 
-	for(i = 0; i < 16; i++)
-		for(j = 0; j < 16; j++)
-			m[i][j] = 0;
-
+	clearMatrix():
 	m[4][5] = 1;
 	m[1][4] = 1;
 	displayMatrix();
@@ -85,8 +82,6 @@ void clearDisplay()
 	for(i = 0; i <= 16; i++)
 		for(j = 0; j <= 16; j++)
 			m[i][j] = 0;
-
-	displayMatrix();
 }
 
 void displayMatrix()
