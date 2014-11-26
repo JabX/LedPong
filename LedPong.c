@@ -16,8 +16,9 @@ int j;					// Int iterator
 
 void initMIC();
 void initDisplay();
-
 void clearDisplay();
+
+void clearMatrix();
 void displayMatrix();
 
 // Matrices definition
@@ -77,11 +78,17 @@ void initDisplay()
 }
 
 
-void clearDisplay()
+void clearMatrix()
 {
 	for(i = 0; i <= 16; i++)
 		for(j = 0; j <= 16; j++)
 			m[i][j] = 0;
+}
+
+void clearDisplay()
+{
+	clearMatrix();
+	displayMatrix();
 }
 
 void displayMatrix()
