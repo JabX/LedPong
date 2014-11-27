@@ -8,22 +8,27 @@ sfr16 TMR2     = 0xcc;                    // Timer2 counter
 // Same clock, same data for all 4 panels, but different loads
 sbit CLK 	= P0^0;
 sbit DATA	= P1^0;
-sbit LOAD1	= P1^1;
-sbit LOAD2	= P1^2;
-sbit LOAD3	= P1^3;
-sbit LOAD4	= P1^4;
+sbit LOAD1	= P1^3;
+sbit LOAD2	= P1^4;
+sbit LOAD3	= P1^1;
+sbit LOAD4	= P1^2;
+
+sbit J1UP	= P2^1;
+sbit J1DOWN	= P2^0;
+sbit J2UP 	= P2^3;
+sbit J2DOWN	= P2^2;
 
 xdata char m[16][16];	// Matrix
 int isFrame = 0;		// True : draw frame
 
-int paddleL = 3;
-int paddleR = 4;
+int paddleL;
+int paddleR;
 int paddleSize = 2;		// True size = 1 + 2*paddleSize
 
 int scoreL = 0;
 int scoreR = 0;
 
-int ball[2] = (7,7*10);		// *10 in order to have subpositions for the ball, without using floats (10 subpositions per led)
+int ball[2] = (40, 4);		// *10 in order to have subpositions for the ball, without using floats (10 subpositions per led)
 int ballXway = 1;
 int ballYway = 1;
 int angle = 0;		// not a real angle, juste an Y movement at each frame
@@ -65,33 +70,93 @@ void sendData(unsigned char, unsigned char, int);
 
 void main()
 {
-	int R1;
-	int R2;
-
-	initTimer2(1);
+	initTimer2(65535);
 	initMIC();
 	initDisplay();
 
+	paddleL = 7;
+	paddleR = 7;
+	angle = 13;
 	while (1)
 	{
 		if(isFrame)
 		{
-			int Ldir = 1;
-			int Rdir = -1;
+		 	isFrame = 0;
 
-			isFrame = 0;
-			paddleL += Ldir;
-			Ldir = -Ldir;
-			paddleR += Rdir;
-			Rdir = -Rdir;
+			if(J1DOWN == 0 && paddleL > paddleSize)
+				paddleL--;
+			if(J1UP == 0 && paddleL < 14 - paddleSize)
+				paddleL++;
+
+			if(J2DOWN == 0 && paddleR > paddleSize)
+				paddleR--;
+			if(J2UP == 0 && paddleR < 14 - paddleSize)
+				paddleR++;
+
 			drawPaddle(0,0);
-			drawPaddle(1,7);
+			drawPaddle(1,15);
 			moveBall();
-
-			displayMatrix();
+		 	displayMatrix();
 		}
 	}
 }
+
+////////////////////
+//// Game logic ////
+////////////////////
+
+void drawPaddle(int n, int col)
+{
+	int paddle;
+	int oobb;
+	int oobt;
+
+	if(!n) paddle = paddleL; else paddle = paddleR;
+
+	oobb = paddle - paddleSize - 1;
+	oobt = paddle + paddleSize + 1;
+
+	if(oobb < 0) oobb = 0;
+	if(oobt > 14) oobt = 14;
+
+	m[oobb][col] = 0;
+	m[oobt][col] = 0;
+
+	for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
+		m[i][col] = 1;
+}
+
+
+void clearBall()
+{
+	m[(int)(ball[0]/10)][ball[1]] = 0;
+}
+
+void moveBall()
+{
+	clearBall();
+	// Test movements, no real collision yet
+	if (ball[0] < 10)
+		ballXway = 1;
+	else if (ball[0] > 140)
+		ballXway = -1;
+	if (ball[1] < 1)
+		ballYway = 1;
+	else if (ball[1] > 14)
+		ballYway = -1;
+	ball[0] += ballXway*angle;
+	ball[1] += ballYway;
+	drawBall();
+}
+
+void drawBall()
+{
+	m[(int)(ball[0]/10)][ball[1]] = 1;
+}
+
+/////////////////////
+//// LOWER-LEVEL ////
+/////////////////////
 
 void initMIC()
 {
@@ -117,6 +182,7 @@ void initDisplay()
 	LOAD4 	= 0;
 
 	sendDataAll(0x0C, 0x00); 	// Shutdown
+	sendDataAll(0x0F, 0x00);	// Normal operation mode
 	sendDataAll(0x0C, 0x01); 	// Normal operation mode
 	sendDataAll(0x0A, 0x0F); 	// Intensity
 	sendDataAll(0x0B, 0x07); 	// No scan limit
@@ -148,7 +214,7 @@ void displayMatrix()
 
 	for (i = 0; i < 16; i++)
 	{
-		k = i + 1;
+		k = (i % 8) + 1;
 		a = '0' + k;
 
 		// Left matrixes
@@ -241,6 +307,7 @@ void sendData(unsigned char a, unsigned char d, int isLine)
 	unsigned char b;
 	unsigned char p;
 
+	EA = 0;
 	CLK = 0;
 
 	for(b=0x80; b>0; b=b>>1)
@@ -264,6 +331,8 @@ void sendData(unsigned char a, unsigned char d, int isLine)
 		CLK = 1;
 		CLK = 0;
 	}
+
+	EA = 1;
 }
 
 void initTimer2(int counts)
@@ -280,59 +349,4 @@ void timer2_ISR() interrupt 5
 {
 	TF2H = 0;
 	isFrame = 1;
-}
-
-
-//////////////////////
-///// Game logic /////
-//////////////////////
-
-void drawPaddle(int n, int col)
-{
-	int paddle;
-	int oobb;
-	int oobt;
-
-	if(!n) paddle = paddleL; else paddle = paddleR;
-
-	oobb = paddle - paddleSize - 1;
-	oobt = paddle + paddleSize + 1;
-
-	if(oobb < 0) oobb = 0;
-	if(oobt > 14) oobt = 14;
-
-	m[oobb][col] = 0;
-	m[oobt][col] = 0;
-
-	for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
-	{
-		m[i][col] = 1;
-	}
-}
-
-void clearBall()
-{
-	m[ball[0]/10][ball[1]/10] = 0;
-}
-
-void moveBall()
-{
-	clearBall();
-	// Test movements, no real collision yet
-	if (ball[0] <= 1 || ball[0] >= 6)
-	{
-		ballXway = -ballXway;
-	}
-	if (ball[1] <= 10 || ball[1] >= 60)
-	{
-		ballYway = -ballYway;
-	}
-	ball[0] += ballXway;
-	ball[1] += angle*ballYway;
-	drawBall();
-}
-
-void drawBall()
-{
-	m[ball[0]/10][ball[1]/10] = 1;
 }
