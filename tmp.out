@@ -4,11 +4,11 @@ COPYRIGHT KEIL ELEKTRONIK GmbH 1987 - 2009
 "C:\Users\Damien\Documents\GitHub\LedPong\LedPong.obj"  TO "C:\Users\Damien\Documents\GitHub\LedPong\LedPong" RS(256) PL(68) PW(78) 
 
 ******************************************************************************
-* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 02E7H BYTE (36%) *
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 0408H BYTE (50%) *
 ******************************************************************************
 
 >> 
 >> 
 >> 
-Program Size: data=19.0 xdata=512 code=758
+Program Size: data=43.0 xdata=256 code=1176
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,4 +1,5 @@
 #include <c8051f310.h>
+#include <stdlib.h>
 
 // SFR16 definitions
 sfr16 TMR2RL   = 0xca;                    // Timer2 reload value
@@ -12,11 +13,24 @@ sbit LOAD2	= P1^2;
 sbit LOAD3	= P1^3;
 sbit LOAD4	= P1^4;
 
-xdata int m[16][16];	// Matrix
+xdata char m[16][16];	// Matrix
+int isFrame = 0;		// True : draw frame
+
+int paddleL = 3;
+int paddleR = 4;
+int paddleSize = 2;		// True size = 1 + 2*paddleSize
+
+int scoreL = 0;
+int scoreR = 0;
+
+int ball[2] = (7,7);
 
 unsigned char init;		// Byte iterator
 int i;					// Int iterator
 int j;					// Int iterator
+
+
+void drawPaddle(int, int);
 
 void initMIC();
 
@@ -44,16 +58,54 @@ void sendData(unsigned char, unsigned char, int);
 
 void main()
 {
-	initTimer2(10000);
+	int R1;
+	int R2;
+
+	initTimer2(1);
 	initMIC();
 	initDisplay();
 
-	clearMatrix():
-	m[4][5] = 1;
-	m[1][4] = 1;
-	displayMatrix();
+	while (1)
+	{
+		if(isFrame)
+		{
+			int Ldir = 1;
+			int Rdir = -1;
 
-	while (1) {}
+			isFrame = 0;
+			paddleL += Ldir;
+			Ldir = -Ldir;
+			paddleR += Rdir;
+			Rdir = -Rdir;
+			drawPaddle(0,0);
+			drawPaddle(1,7);
+
+			displayMatrix();
+		}
+	}
+}
+
+void drawPaddle(int n, int col)
+{
+	int paddle;
+	int oobb;
+	int oobt;
+
+	if(!n) paddle = paddleL; else paddle = paddleR;
+
+	oobb = paddle - paddleSize - 1;
+	oobt = paddle + paddleSize + 1;
+
+	if(oobb < 0) oobb = 0;
+	if(oobt > 14) oobt = 14;
+
+	m[oobb][col] = 0;
+	m[oobt][col] = 0;
+
+	for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
+	{
+		m[i][col] = 1;
+	}
 }
 
 void initMIC()
@@ -66,6 +118,8 @@ void initMIC()
 	XBR1     = 0x40;	// Enable ???
 	P0MDOUT |= 0x01;	// Push-pull for P0.0
 	P1MDOUT |= 0x1F;	// Push-pull for P1.0 -> P1.4
+
+	EA = 1; 			// Enable interruptions
 }
 
 void initDisplay()
@@ -240,5 +294,5 @@ void initTimer2(int counts)
 void timer2_ISR() interrupt 5
 {
 	TF2H = 0;
-	// TODO timer interrupt logic
+	isFrame = 1;
 }
