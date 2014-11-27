@@ -23,7 +23,10 @@ int paddleSize = 2;		// True size = 1 + 2*paddleSize
 int scoreL = 0;
 int scoreR = 0;
 
-int ball[2] = (7,7);
+int ball[2] = (7,7*10);		// *10 in order to have subpositions for the ball, without using floats (10 subpositions per led)
+int ballXway = 1;
+int ballYway = 1;
+int angle = 0;		// not a real angle, juste an Y movement at each frame
 
 unsigned char init;		// Byte iterator
 int i;					// Int iterator
@@ -31,6 +34,10 @@ int j;					// Int iterator
 
 
 void drawPaddle(int, int);
+
+void clearBall();
+void moveBall();
+void drawBall();
 
 void initMIC();
 
@@ -79,32 +86,10 @@ void main()
 			Rdir = -Rdir;
 			drawPaddle(0,0);
 			drawPaddle(1,7);
+			moveBall();
 
 			displayMatrix();
 		}
-	}
-}
-
-void drawPaddle(int n, int col)
-{
-	int paddle;
-	int oobb;
-	int oobt;
-
-	if(!n) paddle = paddleL; else paddle = paddleR;
-
-	oobb = paddle - paddleSize - 1;
-	oobt = paddle + paddleSize + 1;
-
-	if(oobb < 0) oobb = 0;
-	if(oobt > 14) oobt = 14;
-
-	m[oobb][col] = 0;
-	m[oobt][col] = 0;
-
-	for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
-	{
-		m[i][col] = 1;
 	}
 }
 
@@ -115,7 +100,7 @@ void initMIC()
 	OSCICN	 = 0xc3;	// Configure internal oscillator for its lowest frequency
 	RSTSRC 	 = 0x04;	// Enable missing clock detector
 
-	XBR1     = 0x40;	// Enable ???
+	XBR1     = 0x40;	// Enable crossbar
 	P0MDOUT |= 0x01;	// Push-pull for P0.0
 	P1MDOUT |= 0x1F;	// Push-pull for P1.0 -> P1.4
 
@@ -295,4 +280,59 @@ void timer2_ISR() interrupt 5
 {
 	TF2H = 0;
 	isFrame = 1;
+}
+
+
+//////////////////////
+///// Game logic /////
+//////////////////////
+
+void drawPaddle(int n, int col)
+{
+	int paddle;
+	int oobb;
+	int oobt;
+
+	if(!n) paddle = paddleL; else paddle = paddleR;
+
+	oobb = paddle - paddleSize - 1;
+	oobt = paddle + paddleSize + 1;
+
+	if(oobb < 0) oobb = 0;
+	if(oobt > 14) oobt = 14;
+
+	m[oobb][col] = 0;
+	m[oobt][col] = 0;
+
+	for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
+	{
+		m[i][col] = 1;
+	}
+}
+
+void clearBall()
+{
+	m[ball[0]/10][ball[1]/10] = 0;
+}
+
+void moveBall()
+{
+	clearBall();
+	// Test movements, no real collision yet
+	if (ball[0] <= 1 || ball[0] >= 6)
+	{
+		ballXway = -ballXway;
+	}
+	if (ball[1] <= 10 || ball[1] >= 60)
+	{
+		ballYway = -ballYway;
+	}
+	ball[0] += ballXway;
+	ball[1] += angle*ballYway;
+	drawBall();
+}
+
+void drawBall()
+{
+	m[ball[0]/10][ball[1]/10] = 1;
 }
