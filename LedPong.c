@@ -15,6 +15,10 @@ int i;					// Int iterator
 int j;					// Int iterator
 
 void initMIC();
+
+void initTimer2(int);
+void timer2_ISR();
+
 void initDisplay();
 void clearDisplay();
 
@@ -36,6 +40,7 @@ void sendData(unsigned char, unsigned char, int);
 
 void main()
 {
+	initTimer2(10000);
 	initMIC();
 	initDisplay();
 
@@ -216,4 +221,20 @@ void sendData(unsigned char a, unsigned char d, int isLine)
 		CLK = 1;
 		CLK = 0;
 	}
+}
+
+void initTimer2(int counts)
+{
+	TMR2CN = 0x00;
+	CKCON  &= ~0x60;
+	TMR2RL = -counts;
+	TMR2   = 0xffff;
+	ET2    = 1;
+	TR2    = 1;
+}
+
+void timer2_ISR() interrupt 5
+{
+	TF2H = 0;
+	// TODO timer interrupt logic
 }
