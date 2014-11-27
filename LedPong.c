@@ -1,5 +1,9 @@
 #include <c8051f310.h>
 
+// SFR16 definitions
+sfr16 TMR2RL   = 0xca;                    // Timer2 reload value
+sfr16 TMR2     = 0xcc;                    // Timer2 counter
+
 // Same clock, same data for all 4 panels, but different loads
 sbit CLK 	= P0^0;
 sbit DATA	= P1^0;
