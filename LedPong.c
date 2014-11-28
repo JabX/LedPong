@@ -1,5 +1,6 @@
 #include <c8051f310.h>
 #include <stdlib.h>
+#include <math.h>
 
 // SFR16 definitions
 sfr16 TMR2RL   = 0xca;                    // Timer2 reload value
@@ -28,10 +29,11 @@ int paddleSize = 2;		// True size = 1 + 2*paddleSize
 int scoreL = 0;
 int scoreR = 0;
 
-int ball[2] = (40, 4);		// *10 in order to have subpositions for the ball, without using floats (10 subpositions per led)
+int ball[2] = (4*10, 4*10); // *10 to avoid using floats
 int ballXway = 1;
 int ballYway = 1;
-int angle = 0;		// not a real angle, juste an Y movement at each frame
+int ballSpeed = 1*10;		// *10 to avoid using floats, so the real speed is speed/10
+int angle = 0*10;		// *10 to avoid using floats, so the real angle in radians is angle/10
 
 unsigned char init;		// Byte iterator
 int i;					// Int iterator
@@ -140,12 +142,12 @@ void moveBall()
 		ballXway = 1;
 	else if (ball[0] > 140)
 		ballXway = -1;
-	if (ball[1] < 1)
+	if (ball[1] < 10)
 		ballYway = 1;
-	else if (ball[1] > 14)
+	else if (ball[1] > 140)
 		ballYway = -1;
-	ball[0] += ballXway*angle;
-	ball[1] += ballYway;
+	ball[0] += ballXway*(ballSpeed*sin(angle));
+	ball[1] += ballYway*(ballSpeed*cos(angle));
 	drawBall();
 }
 
