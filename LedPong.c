@@ -25,8 +25,8 @@ int paddleL;
 int paddleR;
 int paddleSize = 2;		// True size = 1 + 2*paddleSize
 
-int scoreL = 0;
-int scoreR = 0;
+char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
+char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 
 int ball[2] = (40, 4);		// *10 in order to have subpositions for the ball, without using floats (10 subpositions per led)
 int ballXway = 1;
@@ -43,6 +43,8 @@ void drawPaddle(int, int);
 void clearBall();
 void moveBall();
 void drawBall();
+void incScore(char[8]);
+void drawScore();
 
 void initMIC();
 
@@ -76,7 +78,7 @@ void main()
 
 	paddleL = 7;
 	paddleR = 7;
-	angle = 13;
+	angle = 3;
 	while (1)
 	{
 		if(isFrame)
@@ -96,6 +98,9 @@ void main()
 			drawPaddle(0,0);
 			drawPaddle(1,15);
 			moveBall();
+			// incScore(scoreL);
+			// incScore(scoreR);
+			drawScore();
 		 	displayMatrix();
 		}
 	}
@@ -152,6 +157,37 @@ void moveBall()
 void drawBall()
 {
 	m[(int)(ball[0]/10)][ball[1]] = 1;
+}
+
+void incScore(char score[8])
+{
+	if(!score[1])
+	{
+		int remainder = 1;
+		int digit = 7;
+		while (remainder)
+		{
+			if(score[digit] == 0)
+			{
+				score[digit] = 1;
+				remainder = 0;
+			}
+			else
+			{
+				score[digit] = 0;
+				digit--;
+			}
+		}
+	}
+}
+
+void drawScore()
+{
+	for(j = 0; j < 8; j++)
+	{
+		m[15][j] = scoreL[7-j];
+		m[15][j+8] = scoreR[j];
+	}
 }
 
 /////////////////////
