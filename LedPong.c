@@ -32,8 +32,8 @@ int scoreR = 0;
 int ball[2] = (4*10, 4*10); // *10 to avoid using floats
 int ballXway = 1;
 int ballYway = 1;
-int ballSpeed = 1*10;		// *10 to avoid using floats, so the real speed is speed/10
-int angle = 0*10;		// *10 to avoid using floats, so the real angle in radians is angle/10
+int ballSpeed = 1;
+int angle = 5;		// *10 to avoid using floats, so the real angle in radians is angle/10
 
 unsigned char init;		// Byte iterator
 int i;					// Int iterator
@@ -131,7 +131,7 @@ void drawPaddle(int n, int col)
 
 void clearBall()
 {
-	m[(int)(ball[0]/10)][ball[1]] = 0;
+	m[ball[0]/10][ball[1]/10] = 0;
 }
 
 void moveBall()
@@ -146,14 +146,14 @@ void moveBall()
 		ballYway = 1;
 	else if (ball[1] > 140)
 		ballYway = -1;
-	ball[0] += ballXway*(ballSpeed*sin(angle));
-	ball[1] += ballYway*(ballSpeed*cos(angle));
+	ball[0] += ballXway*(ballSpeed*sin(angle/10));
+	ball[1] += ballYway*(ballSpeed*cos(angle/10));
 	drawBall();
 }
 
 void drawBall()
 {
-	m[(int)(ball[0]/10)][ball[1]] = 1;
+	m[ball[0]/10][ball[1]/10] = 1;
 }
 
 /////////////////////
