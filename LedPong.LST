@@ -1,4 +1,4 @@
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 1   
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 1   
 
 
 C51 COMPILER V9.50a, COMPILATION OF MODULE LEDPONG
@@ -9,413 +9,455 @@ line level    source
 
    1          #include <c8051f310.h>
    2          #include <stdlib.h>
-   3          
-   4          // SFR16 definitions
-   5          sfr16 TMR2RL   = 0xca;                    // Timer2 reload value
-   6          sfr16 TMR2     = 0xcc;                    // Timer2 counter
-   7          
-   8          // Same clock, same data for all 4 panels, but different loads
-   9          sbit CLK        = P0^0;
-  10          sbit DATA       = P1^0;
-  11          sbit LOAD1      = P1^3;
-  12          sbit LOAD2      = P1^4;
-  13          sbit LOAD3      = P1^1;
-  14          sbit LOAD4      = P1^2;
-  15          
-  16          sbit J1UP       = P2^1;
-  17          sbit J1DOWN     = P2^0;
-  18          sbit J2UP       = P2^3;
-  19          sbit J2DOWN     = P2^2;
-  20          
-  21          xdata char m[16][16];   // Matrix
-  22          int isFrame = 0;                // True : draw frame
-  23          
-  24          int paddleL;
-  25          int paddleR;
-  26          int paddleSize = 2;             // True size = 1 + 2*paddleSize
-  27          
-  28          char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
-  29          char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
-  30          
-  31          int ball[2] = (40, 4);          // *10 in order to have subpositions for the ball, without using floats (10 subpos
-             -itions per led)
-  32          int ballXway = 1;
-  33          int ballYway = 1;
-  34          int angle = 0;          // not a real angle, juste an Y movement at each frame
-  35          
-  36          unsigned char init;             // Byte iterator
-  37          int i;                                  // Int iterator
-  38          int j;                                  // Int iterator
-  39          
-  40          
-  41          void drawPaddle(int, int);
+   3          #include <math.h>
+   4          
+   5          // SFR16 definitions
+   6          sfr16 TMR2RL   = 0xca;                    // Timer2 reload value
+   7          sfr16 TMR2     = 0xcc;                    // Timer2 counter
+   8          
+   9          // Same clock, same data for all 4 panels, but different loads
+  10          sbit CLK        = P0^0;
+  11          sbit DATA       = P1^0;
+  12          sbit LOAD1      = P1^3;
+  13          sbit LOAD2      = P1^4;
+  14          sbit LOAD3      = P1^1;
+  15          sbit LOAD4      = P1^2;
+  16          
+  17          sbit J1UP       = P2^1;
+  18          sbit J1DOWN     = P2^0;
+  19          sbit J2UP       = P2^3;
+  20          sbit J2DOWN     = P2^2;
+  21          
+  22          xdata char m[16][16];   // Matrix
+  23          int isFrame = 0;                // True : draw frame
+  24          
+  25          int paddleL;
+  26          int paddleR;
+  27          int paddleSize = 2;             // True size = 1 + 2*paddleSize
+  28          
+  29          char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
+  30          char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
+  31          
+  32          int ball[2] = (7*10, 7*10); // *10 to avoid using floats
+  33          int ballXway = 1;
+  34          int ballYway = 1;
+  35          int ballSpeed = 50;
+  36          int angle = 0;          // *10 to avoid using floats, so the real angle in radians is angle/10
+  37          
+  38          unsigned char init;             // Byte iterator
+  39          int i;                                  // Int iterator
+  40          int j;                                  // Int iterator
+  41          
   42          
-  43          void clearBall();
-  44          void moveBall();
-  45          void drawBall();
-  46          void incScore(char[8]);
-  47          void drawScore();
-  48          
-  49          void initMIC();
-  50          
-  51          void initTimer2(int);
-  52          void timer2_ISR();
+  43          int round10(int);
+  44          void drawPaddle(int, int);
+  45          
+  46          void clearBall();
+  47          void moveBall();
+  48          void drawBall();
+  49          void incScore(char[8]);
+  50          void drawScore();
+  51          
+  52          void initMIC();
   53          
-  54          void initDisplay();
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 2   
+  54          void initTimer2(int);
+  55          void timer2_ISR();
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 2   
 
-  55          void clearDisplay();
   56          
-  57          void clearMatrix();
-  58          void displayMatrix();
+  57          void initDisplay();
+  58          void clearDisplay();
   59          
-  60          // Matrices definition
-  61          //      3       4
-  62          //              1       2
-  63          
-  64          void writeData(int, unsigned char, unsigned char);      // Set all LEDs on matrix 'int'
-  65          void sendDataAll(unsigned char, unsigned char);         // Send a non-LED message to all matrixes
-  66          void sendData1(unsigned char, unsigned char, int);
-  67          void sendData2(unsigned char, unsigned char, int);
-  68          void sendData3(unsigned char, unsigned char, int);
-  69          void sendData4(unsigned char, unsigned char, int);
-  70          void sendData(unsigned char, unsigned char, int);
-  71          
-  72          
-  73          void main()
-  74          {
-  75   1              initTimer2(65535);
-  76   1              initMIC();
-  77   1              initDisplay();
-  78   1      
-  79   1              paddleL = 7;
-  80   1              paddleR = 7;
-  81   1              angle = 3;
-  82   1              while (1)
-  83   1              {
-  84   2                      if(isFrame)
-  85   2                      {
-  86   3                              isFrame = 0;
-  87   3      
-  88   3                              if(J1DOWN == 0 && paddleL > paddleSize)
-  89   3                                      paddleL--;
-  90   3                              if(J1UP == 0 && paddleL < 14 - paddleSize)
-  91   3                                      paddleL++;
-  92   3      
-  93   3                              if(J2DOWN == 0 && paddleR > paddleSize)
-  94   3                                      paddleR--;
-  95   3                              if(J2UP == 0 && paddleR < 14 - paddleSize)
-  96   3                                      paddleR++;
+  60          void clearMatrix();
+  61          void displayMatrix();
+  62          
+  63          // Matrices definition
+  64          //      3       4
+  65          //              1       2
+  66          
+  67          void writeData(int, unsigned char, unsigned char);      // Set all LEDs on matrix 'int'
+  68          void sendDataAll(unsigned char, unsigned char);         // Send a non-LED message to all matrixes
+  69          void sendData1(unsigned char, unsigned char, int);
+  70          void sendData2(unsigned char, unsigned char, int);
+  71          void sendData3(unsigned char, unsigned char, int);
+  72          void sendData4(unsigned char, unsigned char, int);
+  73          void sendData(unsigned char, unsigned char, int);
+  74          
+  75          
+  76          void main()
+  77          {
+  78   1              initTimer2(65535);
+  79   1              initMIC();
+  80   1              initDisplay();
+  81   1      
+  82   1              paddleL = 7;
+  83   1              paddleR = 7;
+  84   1              angle = 0;
+  85   1      
+  86   1              ball[0] = 70;
+  87   1              ball[1] = 70;
+  88   1      
+  89   1              while (1)
+  90   1              {
+  91   2                      if(isFrame)
+  92   2                      {
+  93   3                              int ballx;
+  94   3                              int bally;
+  95   3      
+  96   3                              isFrame = 0;
   97   3      
-  98   3                              drawPaddle(0,0);
-  99   3                              drawPaddle(1,15);
- 100   3                              moveBall();
- 101   3                              incScore(scoreL);
- 102   3                              incScore(scoreR);
- 103   3                              drawScore();
- 104   3                              displayMatrix();
- 105   3                      }
- 106   2              }
- 107   1      }
- 108          
- 109          ////////////////////
- 110          //// Game logic ////
- 111          ////////////////////
- 112          
- 113          void drawPaddle(int n, int col)
- 114          {
- 115   1              int paddle;
- 116   1              int oobb;
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 3   
+  98   3                              if(J1DOWN == 0 && paddleL > paddleSize)
+  99   3                                      paddleL--;
+ 100   3                              if(J1UP == 0 && paddleL < 14 - paddleSize)
+ 101   3                                      paddleL++;
+ 102   3      
+ 103   3                              if(J2DOWN == 0 && paddleR > paddleSize)
+ 104   3                                      paddleR--;
+ 105   3                              if(J2UP == 0 && paddleR < 14 - paddleSize)
+ 106   3                                      paddleR++;
+ 107   3      
+ 108   3                              drawPaddle(0,0);
+ 109   3                              drawPaddle(1,15);
+ 110   3                              moveBall();
+ 111   3      
+ 112   3                              ballx = round10(ball[0]);
+ 113   3                              bally = round10(ball[1]);
+ 114   3      
+ 115   3                              if(bally == 0 && (ballx < paddleL - paddleSize || ballx > paddleL + paddleSize))
+ 116   3                              {
+ 117   4                                      incScore(scoreR);
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 3   
 
- 117   1              int oobt;
- 118   1      
- 119   1              if(!n) paddle = paddleL; else paddle = paddleR;
- 120   1      
- 121   1              oobb = paddle - paddleSize - 1;
- 122   1              oobt = paddle + paddleSize + 1;
- 123   1      
- 124   1              if(oobb < 0) oobb = 0;
- 125   1              if(oobt > 14) oobt = 14;
- 126   1      
- 127   1              m[oobb][col] = 0;
- 128   1              m[oobt][col] = 0;
- 129   1      
- 130   1              for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
- 131   1                      m[i][col] = 1;
- 132   1      }
- 133          
- 134          
- 135          void clearBall()
- 136          {
- 137   1              m[(int)(ball[0]/10)][ball[1]] = 0;
- 138   1      }
- 139          
- 140          void moveBall()
- 141          {
- 142   1              clearBall();
- 143   1              // Test movements, no real collision yet
- 144   1              if (ball[0] < 10)
- 145   1                      ballXway = 1;
- 146   1              else if (ball[0] > 140)
- 147   1                      ballXway = -1;
- 148   1              if (ball[1] < 1)
- 149   1                      ballYway = 1;
- 150   1              else if (ball[1] > 14)
- 151   1                      ballYway = -1;
- 152   1              ball[0] += ballXway*angle;
- 153   1              ball[1] += ballYway;
- 154   1              drawBall();
- 155   1      }
- 156          
- 157          void drawBall()
- 158          {
- 159   1              m[(int)(ball[0]/10)][ball[1]] = 1;
- 160   1      }
- 161          
- 162          void incScore(char score[8])
- 163          {
- 164   1              if(!score[1])
- 165   1              {
- 166   2                      int remainder = 1;
- 167   2                      int digit = 7;
- 168   2                      while (remainder)
- 169   2                      {
- 170   3                              if(score[digit] == 0)
- 171   3                              {
- 172   4                                      score[digit] = 1;
- 173   4                                      remainder = 0;
- 174   4                              }
- 175   3                              else
- 176   3                              {
- 177   4                                      score[digit] = 0;
- 178   4                                      digit--;
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 4   
+ 118   4                                      clearBall();
+ 119   4                                      ball[0] = 70;
+ 120   4                                      ball[1] = 10;
+ 121   4                                      angle = 0;
+ 122   4                                      ballYway = 1;
+ 123   4                                      // paddleL = 7;
+ 124   4                                      // paddleR = 7;
+ 125   4                              }
+ 126   3                              if(bally == 15 && (ballx < paddleR - paddleSize || ballx > paddleR + paddleSize))
+ 127   3                              {
+ 128   4                                      incScore(scoreL);
+ 129   4                                      clearBall();
+ 130   4                                      ball[0] = 70;
+ 131   4                                      ball[1] = 140;
+ 132   4                                      angle = 0;
+ 133   4                                      ballYway = -1;
+ 134   4                                      // paddleL = 7;
+ 135   4                                      // paddleR = 7;
+ 136   4                              }
+ 137   3                              drawScore();
+ 138   3                              displayMatrix();
+ 139   3                      }
+ 140   2              }
+ 141   1      }
+ 142          
+ 143          int round10(int value)
+ 144          {
+ 145   1              int result;
+ 146   1              result = value / 10;
+ 147   1              result += ((value - result * 10) < 5) ? 0 : 1;
+ 148   1              return result;
+ 149   1      }
+ 150          
+ 151          ////////////////////
+ 152          //// Game logic ////
+ 153          ////////////////////
+ 154          
+ 155          void drawPaddle(int n, int col)
+ 156          {
+ 157   1              int paddle;
+ 158   1              int oobb;
+ 159   1              int oobt;
+ 160   1      
+ 161   1              if(!n) paddle = paddleL; else paddle = paddleR;
+ 162   1      
+ 163   1              oobb = paddle - paddleSize - 1;
+ 164   1              oobt = paddle + paddleSize + 1;
+ 165   1      
+ 166   1              if(oobb < 0) oobb = 0;
+ 167   1              if(oobt > 14) oobt = 14;
+ 168   1      
+ 169   1              m[oobb][col] = 0;
+ 170   1              m[oobt][col] = 0;
+ 171   1      
+ 172   1              for(i = paddle - paddleSize; i <= paddle + paddleSize; i++)
+ 173   1                      m[i][col] = 1;
+ 174   1      }
+ 175          
+ 176          
+ 177          void clearBall()
+ 178          {
+ 179   1              m[round10(ball[0])][round10(ball[1])] = 0;
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 4   
 
- 179   4                              }
- 180   3                      }
- 181   2              }
- 182   1      }
- 183          
- 184          void drawScore()
- 185          {
- 186   1              for(j = 0; j < 8; j++)
- 187   1              {
- 188   2                      m[15][j] = scoreL[7-j];
- 189   2                      m[15][j+8] = scoreR[j];
- 190   2              }
- 191   1      }
- 192          
- 193          /////////////////////
- 194          //// LOWER-LEVEL ////
- 195          /////////////////////
- 196          
- 197          void initMIC()
- 198          {
- 199   1              PCA0MD  &= ~0x40;       // Turn off watchdog
- 200   1      
- 201   1              OSCICN   = 0xc3;        // Configure internal oscillator for its lowest frequency
- 202   1              RSTSRC   = 0x04;        // Enable missing clock detector
- 203   1      
- 204   1              XBR1     = 0x40;        // Enable crossbar
- 205   1              P0MDOUT |= 0x01;        // Push-pull for P0.0
- 206   1              P1MDOUT |= 0x1F;        // Push-pull for P1.0 -> P1.4
- 207   1      
- 208   1              EA = 1;                         // Enable interruptions
- 209   1      }
- 210          
- 211          void initDisplay()
- 212          {
- 213   1              CLK     = 0;
- 214   1              DATA    = 0;
- 215   1              LOAD1   = 0;
- 216   1              LOAD2   = 0;
- 217   1              LOAD3   = 0;
- 218   1              LOAD4   = 0;
- 219   1      
- 220   1              sendDataAll(0x0C, 0x00);        // Shutdown
- 221   1              sendDataAll(0x0F, 0x00);        // Normal operation mode
- 222   1              sendDataAll(0x0C, 0x01);        // Normal operation mode
- 223   1              sendDataAll(0x0A, 0x0F);        // Intensity
- 224   1              sendDataAll(0x0B, 0x07);        // No scan limit
- 225   1              sendDataAll(0x09, 0x00);        // No decode
- 226   1      
- 227   1              clearDisplay();
- 228   1      }
- 229          
- 230          
- 231          void clearMatrix()
- 232          {
- 233   1              for(i = 0; i <= 16; i++)
- 234   1                      for(j = 0; j <= 16; j++)
- 235   1                              m[i][j] = 0;
- 236   1      }
+ 180   1      }
+ 181          
+ 182          void moveBall()
+ 183          {
+ 184   1              clearBall();
+ 185   1              if (ball[0] < 5)
+ 186   1                      ballXway = 1;
+ 187   1              else if (ball[0] >= 135)
+ 188   1                      ballXway = -1;
+ 189   1              if (ball[1] < 5)
+ 190   1                      ballYway = 1;
+ 191   1              else if (ball[1] >= 145)
+ 192   1                      ballYway = -1;
+ 193   1              ball[0] += ballXway*angle;
+ 194   1              ball[1] += ballYway*(sqrt(ballSpeed - angle*angle));
+ 195   1              drawBall();
+ 196   1      }
+ 197          
+ 198          void drawBall()
+ 199          {
+ 200   1              m[round10(ball[0])][round10(ball[1])] = 1;
+ 201   1      }
+ 202          
+ 203          void incScore(char score[8])
+ 204          {
+ 205   1              if(!score[1])
+ 206   1              {
+ 207   2                      int remainder = 1;
+ 208   2                      int digit = 7;
+ 209   2                      while (remainder)
+ 210   2                      {
+ 211   3                              if(score[digit] == 0)
+ 212   3                              {
+ 213   4                                      score[digit] = 1;
+ 214   4                                      remainder = 0;
+ 215   4                              }
+ 216   3                              else
+ 217   3                              {
+ 218   4                                      score[digit] = 0;
+ 219   4                                      digit--;
+ 220   4                              }
+ 221   3                      }
+ 222   2              }
+ 223   1      }
+ 224          
+ 225          void drawScore()
+ 226          {
+ 227   1              for(j = 0; j < 8; j++)
+ 228   1              {
+ 229   2                      m[15][j] = scoreL[7-j];
+ 230   2                      m[15][j+8] = scoreR[j];
+ 231   2              }
+ 232   1      }
+ 233          
+ 234          /////////////////////
+ 235          //// LOWER-LEVEL ////
+ 236          /////////////////////
  237          
- 238          void clearDisplay()
+ 238          void initMIC()
  239          {
- 240   1              clearMatrix();
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 5   
+ 240   1              PCA0MD  &= ~0x40;       // Turn off watchdog
+ 241   1      
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 5   
 
- 241   1              displayMatrix();
- 242   1      }
- 243          
- 244          void displayMatrix()
- 245          {
- 246   1              int k;
- 247   1              unsigned char a;
- 248   1              unsigned char d;
- 249   1              unsigned char b;
- 250   1      
- 251   1              for (i = 0; i < 16; i++)
- 252   1              {
- 253   2                      k = (i % 8) + 1;
- 254   2                      a = '0' + k;
- 255   2      
- 256   2                      // Left matrixes
- 257   2                      d = 0x00;
- 258   2                      b = 0x80;
- 259   2                      for (j = 0; j < 8; j++)
- 260   2                      {
- 261   3                              if(m[i][j])
- 262   3                                      d |= b;
- 263   3                              b = b >> 1;
- 264   3                      }
- 265   2                      if(i < 8)
- 266   2                              writeData(1, a, d);
- 267   2                      else
- 268   2                              writeData(3, a, d);
- 269   2      
- 270   2                      // Right matrixes
- 271   2                      d = 0x00;
- 272   2                      b = 0x80;
- 273   2                      for (j = 8; j < 16; j++)
- 274   2                      {
- 275   3                              if(m[i][j])
- 276   3                                      d |= b;
- 277   3                              b = b >> 1;
- 278   3                      }
- 279   2                      if(i < 8)
- 280   2                              writeData(2, a, d);
- 281   2                      else
- 282   2                              writeData(4, a, d);
- 283   2              }
- 284   1      }
- 285          
- 286          void writeData(int n, unsigned char a, unsigned char d)
- 287          {
- 288   1              switch(n)
- 289   1              {
- 290   2              case 1:
- 291   2                      sendData1(a, d, 1);
- 292   2                      break;
- 293   2              case 2:
- 294   2                      sendData2(a, d, 1);
- 295   2                      break;
- 296   2              case 3:
- 297   2                      sendData3(a, d, 1);
- 298   2                      break;
- 299   2              case 4:
- 300   2                      sendData4(a, d, 1);
- 301   2                      break;
- 302   2              }
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 6   
+ 242   1              OSCICN   = 0xc3;        // Configure internal oscillator for its lowest frequency
+ 243   1              RSTSRC   = 0x04;        // Enable missing clock detector
+ 244   1      
+ 245   1              XBR1     = 0x40;        // Enable crossbar
+ 246   1              P0MDOUT |= 0x01;        // Push-pull for P0.0
+ 247   1              P1MDOUT |= 0x1F;        // Push-pull for P1.0 -> P1.4
+ 248   1      
+ 249   1              EA = 1;                         // Enable interruptions
+ 250   1      }
+ 251          
+ 252          void initDisplay()
+ 253          {
+ 254   1              CLK     = 0;
+ 255   1              DATA    = 0;
+ 256   1              LOAD1   = 0;
+ 257   1              LOAD2   = 0;
+ 258   1              LOAD3   = 0;
+ 259   1              LOAD4   = 0;
+ 260   1      
+ 261   1              sendDataAll(0x0C, 0x00);        // Shutdown
+ 262   1              sendDataAll(0x0F, 0x00);        // Normal operation mode
+ 263   1              sendDataAll(0x0C, 0x01);        // Normal operation mode
+ 264   1              sendDataAll(0x0A, 0x0F);        // Intensity
+ 265   1              sendDataAll(0x0B, 0x07);        // No scan limit
+ 266   1              sendDataAll(0x09, 0x00);        // No decode
+ 267   1      
+ 268   1              clearDisplay();
+ 269   1      }
+ 270          
+ 271          
+ 272          void clearMatrix()
+ 273          {
+ 274   1              for(i = 0; i <= 16; i++)
+ 275   1                      for(j = 0; j <= 16; j++)
+ 276   1                              m[i][j] = 0;
+ 277   1      }
+ 278          
+ 279          void clearDisplay()
+ 280          {
+ 281   1              clearMatrix();
+ 282   1              displayMatrix();
+ 283   1      }
+ 284          
+ 285          void displayMatrix()
+ 286          {
+ 287   1              int k;
+ 288   1              unsigned char a;
+ 289   1              unsigned char d;
+ 290   1              unsigned char b;
+ 291   1      
+ 292   1              for (i = 0; i < 16; i++)
+ 293   1              {
+ 294   2                      k = (i % 8) + 1;
+ 295   2                      a = '0' + k;
+ 296   2      
+ 297   2                      // Left matrixes
+ 298   2                      d = 0x00;
+ 299   2                      b = 0x80;
+ 300   2                      for (j = 0; j < 8; j++)
+ 301   2                      {
+ 302   3                              if(m[i][j])
+ 303   3                                      d |= b;
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 6   
 
- 303   1      }
- 304          
- 305          void sendDataAll(unsigned char a, unsigned char d)
- 306          {
- 307   1              sendData1(a, d, 0);
- 308   1              sendData2(a, d, 0);
- 309   1              sendData3(a, d, 0);
- 310   1              sendData4(a, d, 0);
- 311   1      }
- 312          
- 313          void sendData1(unsigned char a, unsigned char d, int isLine)
- 314          {
- 315   1              LOAD1 = 0;
- 316   1              sendData(a, d, isLine);
- 317   1              LOAD1 = 1;
- 318   1      }
- 319          
- 320          void sendData2(unsigned char a, unsigned char d, int isLine)
- 321          {
- 322   1              LOAD2 = 0;
- 323   1              sendData(a, d, isLine);
- 324   1              LOAD2 = 1;
+ 304   3                              b = b >> 1;
+ 305   3                      }
+ 306   2                      if(i < 8)
+ 307   2                              writeData(1, a, d);
+ 308   2                      else
+ 309   2                              writeData(3, a, d);
+ 310   2      
+ 311   2                      // Right matrixes
+ 312   2                      d = 0x00;
+ 313   2                      b = 0x80;
+ 314   2                      for (j = 8; j < 16; j++)
+ 315   2                      {
+ 316   3                              if(m[i][j])
+ 317   3                                      d |= b;
+ 318   3                              b = b >> 1;
+ 319   3                      }
+ 320   2                      if(i < 8)
+ 321   2                              writeData(2, a, d);
+ 322   2                      else
+ 323   2                              writeData(4, a, d);
+ 324   2              }
  325   1      }
  326          
- 327          void sendData3(unsigned char a, unsigned char d, int isLine)
+ 327          void writeData(int n, unsigned char a, unsigned char d)
  328          {
- 329   1              LOAD3 = 0;
- 330   1              sendData(a, d, isLine);
- 331   1              LOAD3 = 1;
- 332   1      }
- 333          
- 334          void sendData4(unsigned char a, unsigned char d, int isLine)
- 335          {
- 336   1              LOAD4 = 0;
- 337   1              sendData(a, d, isLine);
- 338   1              LOAD4 = 1;
- 339   1      }
- 340          
- 341          void sendData(unsigned char a, unsigned char d, int isLine)
- 342          {
- 343   1              unsigned char b;
- 344   1              unsigned char p;
- 345   1      
- 346   1              EA = 0;
- 347   1              CLK = 0;
- 348   1      
- 349   1              for(b=0x80; b>0; b=b>>1)
- 350   1              {
- 351   2                      DATA = (a&b)?1:0;
- 352   2                      CLK = 1;
- 353   2                      CLK = 0;
- 354   2              }
- 355   1      
- 356   1              if(isLine)
- 357   1              {
- 358   2                      p = (d&0x01);
- 359   2                      d >>= 1;
- 360   2                      d &= 0x7F;
- 361   2                      if(p) d |= 0x80;
- 362   2              }
- 363   1      
- 364   1              for(b=0x80; b>0; b=b>>1)
-C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 15:06:14 PAGE 7   
+ 329   1              switch(n)
+ 330   1              {
+ 331   2              case 1:
+ 332   2                      sendData1(a, d, 1);
+ 333   2                      break;
+ 334   2              case 2:
+ 335   2                      sendData2(a, d, 1);
+ 336   2                      break;
+ 337   2              case 3:
+ 338   2                      sendData3(a, d, 1);
+ 339   2                      break;
+ 340   2              case 4:
+ 341   2                      sendData4(a, d, 1);
+ 342   2                      break;
+ 343   2              }
+ 344   1      }
+ 345          
+ 346          void sendDataAll(unsigned char a, unsigned char d)
+ 347          {
+ 348   1              sendData1(a, d, 0);
+ 349   1              sendData2(a, d, 0);
+ 350   1              sendData3(a, d, 0);
+ 351   1              sendData4(a, d, 0);
+ 352   1      }
+ 353          
+ 354          void sendData1(unsigned char a, unsigned char d, int isLine)
+ 355          {
+ 356   1              LOAD1 = 0;
+ 357   1              sendData(a, d, isLine);
+ 358   1              LOAD1 = 1;
+ 359   1      }
+ 360          
+ 361          void sendData2(unsigned char a, unsigned char d, int isLine)
+ 362          {
+ 363   1              LOAD2 = 0;
+ 364   1              sendData(a, d, isLine);
+ 365   1              LOAD2 = 1;
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 7   
 
- 365   1              {
- 366   2                      DATA = (d&b)?1:0;
- 367   2                      CLK = 1;
- 368   2                      CLK = 0;
- 369   2              }
- 370   1      
- 371   1              EA = 1;
- 372   1      }
- 373          
- 374          void initTimer2(int counts)
- 375          {
- 376   1              TMR2CN = 0x00;
- 377   1              CKCON  &= ~0x60;
- 378   1              TMR2RL = -counts;
- 379   1              TMR2   = 0xffff;
- 380   1              ET2    = 1;
- 381   1              TR2    = 1;
- 382   1      }
- 383          
- 384          void timer2_ISR() interrupt 5
- 385          {
- 386   1              TF2H = 0;
- 387   1              isFrame = 1;
- 388   1      }
+ 366   1      }
+ 367          
+ 368          void sendData3(unsigned char a, unsigned char d, int isLine)
+ 369          {
+ 370   1              LOAD3 = 0;
+ 371   1              sendData(a, d, isLine);
+ 372   1              LOAD3 = 1;
+ 373   1      }
+ 374          
+ 375          void sendData4(unsigned char a, unsigned char d, int isLine)
+ 376          {
+ 377   1              LOAD4 = 0;
+ 378   1              sendData(a, d, isLine);
+ 379   1              LOAD4 = 1;
+ 380   1      }
+ 381          
+ 382          void sendData(unsigned char a, unsigned char d, int isLine)
+ 383          {
+ 384   1              unsigned char b;
+ 385   1              unsigned char p;
+ 386   1      
+ 387   1              EA = 0;
+ 388   1              CLK = 0;
+ 389   1      
+ 390   1              for(b=0x80; b>0; b=b>>1)
+ 391   1              {
+ 392   2                      DATA = (a&b)?1:0;
+ 393   2                      CLK = 1;
+ 394   2                      CLK = 0;
+ 395   2              }
+ 396   1      
+ 397   1              if(isLine)
+ 398   1              {
+ 399   2                      p = (d&0x01);
+ 400   2                      d >>= 1;
+ 401   2                      d &= 0x7F;
+ 402   2                      if(p) d |= 0x80;
+ 403   2              }
+ 404   1      
+ 405   1              for(b=0x80; b>0; b=b>>1)
+ 406   1              {
+ 407   2                      DATA = (d&b)?1:0;
+ 408   2                      CLK = 1;
+ 409   2                      CLK = 0;
+ 410   2              }
+ 411   1      
+ 412   1              EA = 1;
+ 413   1      }
+ 414          
+ 415          void initTimer2(int counts)
+ 416          {
+ 417   1              TMR2CN = 0x00;
+ 418   1              CKCON  &= ~0x60;
+ 419   1              TMR2RL = -counts;
+ 420   1              TMR2   = 0xffff;
+ 421   1              ET2    = 1;
+ 422   1              TR2    = 1;
+ 423   1      }
+ 424          
+ 425          void timer2_ISR() interrupt 5
+ 426          {
+ 427   1              TF2H = 0;
+C51 COMPILER V9.50a   LEDPONG                                                              11/28/2014 16:28:40 PAGE 8   
+
+ 428   1              isFrame = 1;
+ 429   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1509    ----
+   CODE SIZE        =   1850    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =    256    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     39      16
+   DATA SIZE        =     41      20
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.

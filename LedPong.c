@@ -29,17 +29,18 @@ int paddleSize = 2;		// True size = 1 + 2*paddleSize
 char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 
-int ball[2] = (4*10, 4*10); // *10 to avoid using floats
+int ball[2] = (7*10, 7*10); // *10 to avoid using floats
 int ballXway = 1;
 int ballYway = 1;
-int ballSpeed = 1;
-int angle = 5;		// *10 to avoid using floats, so the real angle in radians is angle/10
+int ballSpeed = 50;
+int angle = 0;		// *10 to avoid using floats, so the real angle in radians is angle/10
 
 unsigned char init;		// Byte iterator
 int i;					// Int iterator
 int j;					// Int iterator
 
 
+int round10(int);
 void drawPaddle(int, int);
 
 void clearBall();
@@ -80,11 +81,18 @@ void main()
 
 	paddleL = 7;
 	paddleR = 7;
-	angle = 3;
+	angle = 0;
+
+	ball[0] = 70;
+	ball[1] = 70;
+
 	while (1)
 	{
 		if(isFrame)
 		{
+			int ballx;
+			int bally;
+
 		 	isFrame = 0;
 
 			if(J1DOWN == 0 && paddleL > paddleSize)
@@ -100,12 +108,44 @@ void main()
 			drawPaddle(0,0);
 			drawPaddle(1,15);
 			moveBall();
-			// incScore(scoreL);
-			// incScore(scoreR);
+
+			ballx = round10(ball[0]);
+			bally = round10(ball[1]);
+
+			if(bally == 0 && (ballx < paddleL - paddleSize || ballx > paddleL + paddleSize))
+			{
+				incScore(scoreR);
+				clearBall();
+				ball[0] = 70;
+				ball[1] = 30;
+				angle = 0;
+				ballYway = 1;
+				// paddleL = 7;
+				// paddleR = 7;
+			}
+			if(bally == 15 && (ballx < paddleR - paddleSize || ballx > paddleR + paddleSize))
+			{
+				incScore(scoreL);
+				clearBall();
+				ball[0] = 70;
+				ball[1] = 120;
+				angle = 0;
+				ballYway = -1;
+				// paddleL = 7;
+				// paddleR = 7;
+			}
 			drawScore();
 		 	displayMatrix();
 		}
 	}
+}
+
+int round10(int value)
+{
+	int result;
+	result = value / 10;
+	result += ((value - result * 10) < 5) ? 0 : 1;
+	return result;
 }
 
 ////////////////////
@@ -136,29 +176,28 @@ void drawPaddle(int n, int col)
 
 void clearBall()
 {
-	m[ball[0]/10][ball[1]/10] = 0;
+	m[round10(ball[0])][round10(ball[1])] = 0;
 }
 
 void moveBall()
 {
 	clearBall();
-	// Test movements, no real collision yet
-	if (ball[0] < 10)
+	if (ball[0] < 5)
 		ballXway = 1;
-	else if (ball[0] > 140)
+	else if (ball[0] >= 135)
 		ballXway = -1;
-	if (ball[1] < 10)
+	if (ball[1] < 5)
 		ballYway = 1;
-	else if (ball[1] > 140)
+	else if (ball[1] >= 145)
 		ballYway = -1;
-	ball[0] += ballXway*(ballSpeed*sin(angle/10));
-	ball[1] += ballYway*(ballSpeed*cos(angle/10));
+	ball[0] += ballXway*angle;
+	ball[1] += ballYway*(sqrt(ballSpeed - angle*angle));
 	drawBall();
 }
 
 void drawBall()
 {
-	m[ball[0]/10][ball[1]/10] = 1;
+	m[round10(ball[0])][round10(ball[1])] = 1;
 }
 
 void incScore(char score[8])
