@@ -30,10 +30,11 @@ char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 
 int ball[2] = (7*10, 7*10); // *10 to avoid using floats
-int ballXway = 1;
-int ballYway = 1;
 int ballSpeed = 50;
-int angle = 0;		// *10 to avoid using floats, so the real angle in radians is angle/10
+int ballYway = 1;
+int deltaX = 0;
+int deltaY = 0;
+int angle = 0;
 
 unsigned char init;		// Byte iterator
 int i;					// Int iterator
@@ -43,6 +44,7 @@ int j;					// Int iterator
 int round10(int);
 void drawPaddle(int, int);
 
+void setAngle(int);
 void clearBall();
 void moveBall();
 void drawBall();
@@ -85,6 +87,7 @@ void main()
 
 	ball[0] = 70;
 	ball[1] = 70;
+	setAngle(0);
 
 	while (1)
 	{
@@ -173,6 +176,12 @@ void drawPaddle(int n, int col)
 		m[i][col] = 1;
 }
 
+void setAngle(int a)
+{
+	deltaX = a;
+	deltaY = sqrt(ballSpeed - delatX*deltaX);
+	angle = a;
+}
 
 void clearBall()
 {
@@ -182,16 +191,14 @@ void clearBall()
 void moveBall()
 {
 	clearBall();
-	if (ball[0] < 5)
-		ballXway = 1;
-	else if (ball[0] >= 135)
-		ballXway = -1;
+	if (ball[0] < 5 || ball[0] >= 135)
+		setAngle(-angle);
 	if (ball[1] < 5)
 		ballYway = 1;
 	else if (ball[1] >= 145)
 		ballYway = -1;
-	ball[0] += ballXway*angle;
-	ball[1] += ballYway*(sqrt(ballSpeed - angle*angle));
+	ball[0] += deltaX;
+	ball[1] += ballYway*deltaY;
 	drawBall();
 }
 
