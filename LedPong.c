@@ -116,7 +116,7 @@ void main()
 			ballx = round10(ball[0]);
 			bally = round10(ball[1]);
 
-			if(bally == 0 && (ballx < paddleL - paddleSize || ballx > paddleL + paddleSize))
+			if(bally == 0 && (ballx < paddleL - paddleSize - (angle > 2) || ballx > paddleL + paddleSize + (angle > 2)))
 			{
 				incScore(scoreR);
 				clearBall();
@@ -155,7 +155,6 @@ void main()
 ////////////////////
 //// Game logic ////
 ////////////////////
-
 
 // Updates ball angle on collision with a paddle (left or right)
 void collide(unsigned char ballx, char paddlePosition)
