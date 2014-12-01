@@ -2,10 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-// SFR16 definitions
-sfr16 TMR2RL   = 0xca;                    // Timer2 reload value
-sfr16 TMR2     = 0xcc;                    // Timer2 counter
-
 // Same clock, same data for all 4 panels, but different loads
 sbit CLK 	= P0^0;
 sbit DATA	= P1^0;
@@ -19,17 +15,22 @@ sbit J1DOWN	= P2^0;
 sbit J2UP 	= P2^3;
 sbit J2DOWN	= P2^2;
 
+// Timer 2 definitions
+sfr16 TMR2RL   = 0xca;	// Reload value
+sfr16 TMR2     = 0xcc;  // Counter
+
 xdata char m[16][16];	// Matrix
+
 char isFrame = 0;		// True : draw frame
 
 char paddleL;
 char paddleR;
-char paddleSize = 2;		// True size = 1 + 2*paddleSize
+char paddleSize = 2;	// True size = 1 + 2*paddleSize
 
 char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 
-unsigned char ball[2]; // *10 to avoid using floats
+unsigned char ball[2]; 	// *10 to avoid using floats
 char ballSpeed = 50;
 char ballYway = 1;
 char deltaX;
@@ -78,7 +79,7 @@ void sendData(unsigned char, unsigned char, char);
 
 void main()
 {
-	initTimer2(65535);
+	initTimer2(65535); // Max timer counts
 	initMIC();
 	initDisplay();
 
@@ -304,9 +305,9 @@ void initDisplay()
 	LOAD4 	= 0;
 
 	sendDataAll(0x0C, 0x00); 	// Shutdown
-	sendDataAll(0x0F, 0x00);	// Normal operation mode
+	sendDataAll(0x0F, 0x00);	// Test mode off
 	sendDataAll(0x0C, 0x01); 	// Normal operation mode
-	sendDataAll(0x0A, 0x0F); 	// Intensity
+	sendDataAll(0x0A, 0x0F); 	// Max intensity
 	sendDataAll(0x0B, 0x07); 	// No scan limit
 	sendDataAll(0x09, 0x00); 	// No decode
 
@@ -336,12 +337,12 @@ void displayMatrix()
 
 	for (i = 0; i < 16; i++)
 	{
-		k = (i % 8) + 1;
-		a = '0' + k;
+		k = (i % 8) + 1;	// Lines are 0-7 / 8-15 in our matrix and 1-8 in the driver
+		a = '0' + k;		// Formatting as a hex char
 
 		// Left matrixes
-		d = 0x00;
-		b = 0x80;
+		d = 0x00;			// Data
+		b = 0x80; 			// Mask
 		for (j = 0; j < 8; j++)
 		{
 			if(m[i][j])
@@ -432,24 +433,25 @@ void sendData(unsigned char a, unsigned char d, char isLine)
 	EA = 0;
 	CLK = 0;
 
-	for(b=0x80; b>0; b=b>>1)
+	for(b = 0x80; b > 0; b = b >> 1)
 	{
-		DATA = (a&b)?1:0;
+		DATA = (a & b) ? 1 : 0;
 		CLK = 1;
 		CLK = 0;
 	}
 
+	// Line messages are different from regular messages because the 8th LED is at the wrong end
 	if(isLine)
 	{
-		p = (d&0x01);
+		p = (d & 0x01);
 		d >>= 1;
 		d &= 0x7F;
 		if(p) d |= 0x80;
 	}
 
-	for(b=0x80; b>0; b=b>>1)
+	for(b = 0x80; b > 0; b = b >> 1)
 	{
-		DATA = (d&b)?1:0;
+		DATA = (d & b) ? 1 : 0;
 		CLK = 1;
 		CLK = 0;
 	}
@@ -459,12 +461,12 @@ void sendData(unsigned char a, unsigned char d, char isLine)
 
 void initTimer2(int counts)
 {
-	TMR2CN = 0x00;
+	TMR2CN	= 0x00;
 	CKCON  &= ~0x60;
-	TMR2RL = -counts;
-	TMR2   = 0xffff;
-	ET2    = 1;
-	TR2    = 1;
+	TMR2RL 	= -counts;
+	TMR2   	= 0xffff;
+	ET2    	= 1;
+	TR2    	= 1;
 }
 
 void timer2_ISR() interrupt 5
