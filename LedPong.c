@@ -31,7 +31,7 @@ char scoreL[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 char scoreR[8] = (0, 0, 0, 0, 0, 0, 0, 0);
 
 unsigned char ball[2]; 	// *10 to avoid using floats
-char ballSpeed = 50;
+char ballSpeed;
 char ballYway = 1;
 char deltaX;
 char deltaY;
@@ -86,6 +86,7 @@ void main()
 	paddleL = 7;
 	paddleR = 7;
 
+	ballSpeed = 10;
 	ball[0] = 70;
 	ball[1] = 70;
 	setAngle(0);
@@ -109,6 +110,12 @@ void main()
 			if(J2UP == 0 && paddleR < 14 - paddleSize)
 				paddleR++;
 
+			if(ballSpeed < 100)
+			{
+				ballSpeed += 2;
+				setAngle(angle);
+			}
+
 			drawPaddle(0,0);
 			drawPaddle(1,15);
 			moveBall();
@@ -121,7 +128,8 @@ void main()
 				incScore(scoreR);
 				clearBall();
 				ball[0] = 70;
-				ball[1] = 40;
+				ball[1] = 70;
+				ballSpeed = 10;
 				setAngle(0);
 				ballYway = 1;
 				clearPaddles();
@@ -136,7 +144,8 @@ void main()
 				incScore(scoreL);
 				clearBall();
 				ball[0] = 70;
-				ball[1] = 110;
+				ball[1] = 70;
+				ballSpeed = 10;
 				setAngle(0);
 				ballYway = -1;
 				clearPaddles();
